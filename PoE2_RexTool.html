@@ -1,0 +1,1937 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="color-scheme" content="light">
+<meta name="description" content="流放之路 2 词缀正则生成器 · 支持国服简体中文 / 国际服繁体中文 / English">
+<title>PoE 2 正则工具 · 流放之路 2 词缀正则生成器</title>
+<style>
+:root {
+  color-scheme: light;
+  --bg: #f5f5f7; --card: #ffffff; --fill: #f2f2f4; --fill-strong: #e8e8ed;
+  --line: rgba(0, 0, 0, 0.08); --line-strong: rgba(0, 0, 0, 0.14);
+  --ink: #1d1d1f; --ink-2: #48484c; --sub: #86868b; --sub-2: #a1a1a6;
+  --accent: #0071e3; --accent-hover: #0077ed; --accent-tint: rgba(0, 113, 227, 0.08);
+  --accent-ring: rgba(0, 113, 227, 0.22);
+  --green: #34c759; --green-tint: rgba(52, 199, 89, 0.12);
+  --red: #ff3b30; --red-tint: rgba(255, 59, 48, 0.08);
+  --orange: #ff9500; --purple: #af52de;
+  --r-xs: 8px; --r-sm: 10px; --r-md: 14px; --r-lg: 18px; --r-xl: 24px; --r-pill: 980px;
+  --shadow-1: 0 1px 2px rgba(0, 0, 0, 0.04), 0 1px 3px rgba(0, 0, 0, 0.03);
+  --shadow-2: 0 2px 8px rgba(0, 0, 0, 0.05), 0 8px 24px rgba(0, 0, 0, 0.05);
+  --ease: cubic-bezier(0.32, 0.72, 0, 1); --fast: 160ms var(--ease);
+  --font-sans: -apple-system, BlinkMacSystemFont, "SF Pro Text", "SF Pro Display",
+    "Segoe UI", "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei UI", "Microsoft YaHei",
+    "Noto Sans CJK SC", "Noto Sans TC", Roboto, Helvetica, Arial, sans-serif;
+  --font-mono: ui-monospace, "SF Mono", SFMono-Regular, Menlo, Consolas, "Liberation Mono", monospace;
+}
+* { box-sizing: border-box; }
+html, body { margin: 0; padding: 0; min-height: 100%; }
+body { background: var(--bg); color: var(--ink); font-family: var(--font-sans); font-size: 14px; line-height: 1.5; -webkit-font-smoothing: antialiased; }
+button, input, select, textarea { font: inherit; color: inherit; }
+button { cursor: pointer; border: none; background: none; }
+a { color: var(--accent); text-decoration: none; }
+a:hover { text-decoration: underline; }
+:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; border-radius: 6px; }
+.sr-only { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; border: 0; }
+
+.app { max-width: 1400px; margin: 0 auto; padding: 0 24px 32px; min-height: 100vh; display: flex; flex-direction: column; }
+.toolbar-wrap { position: sticky; top: 0; z-index: 40; padding: 14px 0 12px; background: transparent; }
+.toolbar { display: flex; align-items: center; gap: 16px; flex-wrap: wrap; padding: 12px 22px; background: var(--card); border: 1px solid var(--line); border-radius: var(--r-lg); box-shadow: var(--shadow-2); }
+.brand { display: flex; align-items: center; gap: 10px; padding: 0; text-decoration: none; color: inherit; }
+.brand-text { display: flex; flex-direction: column; line-height: 1.15; }
+.brand-name { font-size: 15px; font-weight: 650; letter-spacing: -0.01em; }
+.brand-sub { font-size: 11px; color: var(--sub); letter-spacing: 0; }
+.segmented { display: inline-flex; padding: 2px; gap: 2px; background: var(--fill); border-radius: var(--r-sm); }
+.segmented button { padding: 6px 18px; border-radius: 8px; font-size: 13px; font-weight: 550; color: var(--ink-2); transition: background var(--fast), color var(--fast), box-shadow var(--fast); white-space: nowrap; }
+.segmented button:hover { color: var(--ink); }
+.segmented button[aria-pressed="true"] { background: var(--card); color: var(--ink); box-shadow: var(--shadow-1); }
+.segmented.small button { padding: 5px 12px; font-size: 12px; }
+.toolbar-end { margin-left: auto; display: flex; align-items: center; gap: 10px; }
+.field-inline { display: inline-flex; align-items: center; gap: 8px; font-size: 12px; color: var(--sub); }
+.field-inline select { appearance: none; -webkit-appearance: none; padding: 7px 30px 7px 12px; border-radius: var(--r-sm); border: 1px solid var(--line-strong); background: var(--card) url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'><path d='M3 4.6 6 7.8l3-3.2' fill='none' stroke='%2386868b' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round'/></svg>") no-repeat right 10px center; font-size: 13px; font-weight: 550; color: var(--ink); }
+.field-inline select:focus { border-color: var(--accent); box-shadow: 0 0 0 3px var(--accent-ring); outline: none; }
+
+.workspace { display: grid; grid-template-columns: minmax(0, 1fr) 380px; gap: 20px; align-items: start; padding-top: 8px; flex: 1; }
+.column { display: flex; flex-direction: column; gap: 16px; min-width: 0; }
+.card { background: var(--card); border-radius: var(--r-lg); box-shadow: var(--shadow-1); border: 1px solid var(--line); padding: 18px 20px; }
+.card.sticky { position: sticky; top: 88px; }
+.card-head { display: flex; align-items: center; gap: 10px; margin-bottom: 14px; }
+.card-head h2 { margin: 0; font-size: 15px; font-weight: 650; letter-spacing: -0.01em; }
+.card-head .spacer { margin-left: auto; }
+.badge { display: inline-flex; align-items: center; justify-content: center; min-width: 22px; height: 22px; padding: 0 8px; border-radius: var(--r-pill); background: var(--fill); color: var(--sub); font-size: 11px; font-weight: 600; font-variant-numeric: tabular-nums; }
+.badge.accent { background: var(--accent-tint); color: var(--accent); }
+.badge.gold { background: rgba(255, 149, 0, 0.12); color: #b26a00; }
+.hint { font-size: 12px; color: var(--sub); margin: 0; }
+.hint.mb { margin-bottom: 12px; }
+.hint.mb-lg { margin-bottom: 14px; }
+.hint.mb-sm { margin-bottom: 6px; }
+.hint.mb-xs { margin-bottom: 10px; }
+.hint.lh { line-height: 1.65; }
+.mb { margin-bottom: 12px; }
+.mb-lg { margin-bottom: 14px; }
+.mt { margin-top: 14px; }
+.row-tight { gap: 8px; }
+.row-wide { gap: 18px; flex-wrap: wrap; }
+.full-basis { flex-basis: 100%; }
+.c-sub { color: var(--sub); }
+.c-sub-2 { color: var(--sub-2); }
+.is-hidden { display: none; }
+
+.control-row { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; }
+.control-row.between { justify-content: space-between; }
+.grow { flex: 1; min-width: 0; }
+.search { display: flex; align-items: center; gap: 8px; padding: 9px 12px; background: var(--fill); border: 1px solid transparent; border-radius: var(--r-sm); transition: background var(--fast), border-color var(--fast), box-shadow var(--fast); }
+.search:focus-within { background: var(--card); border-color: var(--accent); box-shadow: 0 0 0 3px var(--accent-ring); }
+.search .icon { color: var(--sub-2); flex: none; }
+.search input { border: none; background: none; outline: none; width: 100%; min-width: 0; font-size: 13px; }
+.search input::placeholder { color: var(--sub-2); }
+
+.chips { display: flex; flex-wrap: wrap; gap: 6px; }
+.chip { padding: 6px 13px; border-radius: var(--r-pill); background: var(--fill); color: var(--ink-2); font-size: 12.5px; font-weight: 550; transition: background var(--fast), color var(--fast), transform var(--fast); border: 1px solid transparent; white-space: nowrap; }
+.chip:hover { background: var(--fill-strong); color: var(--ink); }
+.chip:active { transform: scale(0.97); }
+.chip[aria-pressed="true"] { background: var(--accent); color: #fff; border-color: transparent; }
+.chip[aria-pressed="true"]:hover { background: var(--accent-hover); }
+.chip.tone-neutral[aria-pressed="true"] { background: var(--ink); color: #fff; }
+
+.btn { display: inline-flex; align-items: center; justify-content: center; gap: 7px; padding: 9px 16px; border-radius: var(--r-pill); font-size: 13px; font-weight: 550; background: var(--fill); color: var(--ink); transition: background var(--fast), transform var(--fast), opacity var(--fast); white-space: nowrap; }
+.btn:hover { background: var(--fill-strong); }
+.btn:active { transform: scale(0.98); }
+.btn.primary { background: var(--accent); color: #fff; }
+.btn.primary:hover { background: var(--accent-hover); }
+.btn.ghost { background: transparent; color: var(--accent); }
+.btn.ghost:hover { background: var(--accent-tint); }
+.btn.danger { background: transparent; color: var(--red); }
+.btn.danger:hover { background: var(--red-tint); }
+.btn:disabled { opacity: 0.4; cursor: not-allowed; }
+.btn:disabled:hover { background: var(--fill); }
+.btn.primary:disabled:hover { background: var(--accent); }
+.btn.small { padding: 6px 12px; font-size: 12px; }
+.btn.block { width: 100%; }
+.input { width: 100%; min-width: 0; padding: 8px 11px; background: var(--fill); border: 1px solid transparent; border-radius: var(--r-sm); outline: none; font-size: 13px; font-variant-numeric: tabular-nums; transition: background var(--fast), border-color var(--fast), box-shadow var(--fast); }
+.input:focus { background: var(--card); border-color: var(--accent); box-shadow: 0 0 0 3px var(--accent-ring); }
+.input::placeholder { color: var(--sub-2); }
+
+.threshold { display: inline-flex; align-items: center; gap: 6px; padding: 5px 6px 5px 12px; background: var(--accent-tint); border-radius: var(--r-pill); font-size: 12px; color: var(--accent); font-weight: 550; }
+.threshold input { width: 62px; padding: 4px 8px; border: none; border-radius: var(--r-pill); background: var(--card); outline: none; font-size: 12.5px; font-weight: 600; font-variant-numeric: tabular-nums; color: var(--ink); box-shadow: inset 0 0 0 1px var(--line); }
+.threshold input:focus { box-shadow: inset 0 0 0 1px var(--accent), 0 0 0 3px var(--accent-ring); }
+
+.summary-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(148px, 1fr)); gap: 12px; }
+.summary-field { display: flex; flex-direction: column; gap: 6px; }
+.summary-field label { font-size: 11.5px; font-weight: 600; color: var(--sub); letter-spacing: 0.01em; }
+.summary-field .input { font-weight: 600; }
+
+
+.tier-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(100px, 1fr)); gap: 10px; }
+.tier-field { display: flex; flex-direction: column; gap: 4px; }
+.tier-field label { font-size: 11.5px; font-weight: 600; color: var(--sub); }
+
+.affix-groups { display: flex; flex-direction: column; gap: 4px; }
+.group-label { display: flex; align-items: center; gap: 10px; margin: 14px 0 8px; font-size: 11px; font-weight: 650; letter-spacing: 0.04em; text-transform: uppercase; color: var(--sub); }
+.group-label::after { content: ""; flex: 1; height: 1px; background: var(--line); }
+.group-label:first-child { margin-top: 2px; }
+.affix-row { display: flex; align-items: center; gap: 10px; padding: 9px 12px; border-radius: var(--r-sm); transition: background var(--fast); cursor: pointer; flex-wrap: wrap; }
+.affix-row:hover { background: var(--fill); }
+.affix-row + .affix-row { margin-top: 2px; }
+.affix-row.inc { background: var(--accent-tint); }
+.affix-row.inc:hover { background: rgba(0, 113, 227, 0.12); }
+.affix-row.exc { background: var(--red-tint); }
+.affix-row.exc:hover { background: rgba(255, 59, 48, 0.12); }
+.affix-text { flex: 1; min-width: 140px; font-size: 13px; color: var(--ink); line-height: 1.55; }
+
+.affix-row.composite .affix-text { white-space: pre-line; }
+.affix-row.composite .affix-text .ln { display: block; }
+.affix-row.inc .affix-text { color: var(--accent); font-weight: 550; }
+.affix-row.exc .affix-text { color: var(--red); font-weight: 550; }
+.affix-meta { display: flex; align-items: center; gap: 6px; font-size: 11px; color: var(--sub); }
+.tag { padding: 2px 7px; border-radius: var(--r-pill); background: var(--fill); color: var(--sub); font-size: 10.5px; font-weight: 600; letter-spacing: 0.01em; white-space: nowrap; }
+.tag.prefix { background: rgba(175, 82, 222, 0.1); color: var(--purple); }
+.tag.suffix { background: rgba(255, 149, 0, 0.12); color: #b26a00; }
+.tag.tiers { background: var(--accent-tint); color: var(--accent); font-weight: 700; }
+.tag.sub { background: rgba(255, 59, 48, 0.06); color: var(--red); font-size: 10px; }
+.row-actions { display: flex; gap: 4px; flex: none; }
+
+.affix-row.composite > .row-actions { align-self: stretch; align-items: center; }
+.icon-btn { width: 26px; height: 26px; display: grid; place-items: center; border-radius: 50%; color: var(--sub); transition: background var(--fast), color var(--fast), transform var(--fast); font-size: 14px; line-height: 1; }
+.icon-btn:hover { background: var(--fill-strong); color: var(--ink); }
+.icon-btn:active { transform: scale(0.9); }
+.affix-row.inc .icon-btn.inc { background: var(--accent); color: #fff; }
+.affix-row.exc .icon-btn.exc { background: var(--red); color: #fff; }
+.empty { padding: 34px 16px; text-align: center; color: var(--sub); font-size: 13px; }
+
+.hot-bar { padding: 12px 14px 10px; margin-bottom: 14px; background: linear-gradient(135deg, rgba(255, 59, 48, 0.035), rgba(255, 149, 0, 0.035)); border: 1px solid rgba(255, 59, 48, 0.1); border-radius: var(--r-md); }
+.hot-bar .hot-label { display: block; font-size: 11px; font-weight: 700; letter-spacing: 0.04em; text-transform: uppercase; color: var(--red); margin-bottom: 8px; }
+.hot-list { display: flex; flex-direction: column; gap: 2px; }
+.hot-row { display: flex; align-items: center; gap: 10px; padding: 9px 12px; border-radius: var(--r-sm); transition: background var(--fast); cursor: pointer; flex-wrap: wrap; }
+.hot-row:hover { background: rgba(255, 59, 48, 0.06); }
+.hot-row.inc { background: var(--accent-tint); }
+.hot-row.inc:hover { background: rgba(0, 113, 227, 0.12); }
+.hot-row.exc { background: var(--red-tint); }
+.hot-row.exc:hover { background: rgba(255, 59, 48, 0.12); }
+.hot-text { flex: 1; min-width: 140px; font-size: 13px; color: var(--ink); }
+.hot-row.inc .hot-text { color: var(--accent); font-weight: 550; }
+.hot-row.exc .hot-text { color: var(--red); font-weight: 550; }
+.hot-row .row-actions { display: flex; gap: 4px; flex: none; }
+.hot-row .icon-btn { width: 26px; height: 26px; display: grid; place-items: center; border-radius: 50%; color: var(--sub); transition: background var(--fast), color var(--fast), transform var(--fast); font-size: 14px; line-height: 1; }
+.hot-row .icon-btn:hover { background: var(--fill-strong); color: var(--ink); }
+.hot-row .icon-btn:active { transform: scale(0.9); }
+.hot-row.inc .icon-btn.inc { background: var(--accent); color: #fff; }
+.hot-row.exc .icon-btn.exc { background: var(--red); color: #fff; }
+
+.result-list { display: flex; flex-direction: column; gap: 2px; margin-bottom: 4px; }
+.result-item { display: flex; align-items: center; gap: 8px; padding: 8px 10px; border-radius: var(--r-xs); font-size: 12.5px; background: var(--fill); }
+.result-item .mode { flex: none; width: 18px; height: 18px; border-radius: 50%; display: grid; place-items: center; font-size: 10px; font-weight: 700; color: #fff; }
+.result-item.inc .mode { background: var(--accent); }
+.result-item.exc .mode { background: var(--red); }
+.result-item .label { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.result-item .thr { color: var(--sub); font-variant-numeric: tabular-nums; }
+
+.regex-box { margin-top: 14px; border-radius: var(--r-md); background: #fbfbfd; border: 1px solid var(--line); overflow: hidden; }
+.regex-head { display: flex; align-items: center; gap: 8px; padding: 9px 12px; border-bottom: 1px solid var(--line); font-size: 11px; font-weight: 650; letter-spacing: 0.03em; text-transform: uppercase; color: var(--sub); }
+.regex-head .spacer { margin-left: auto; }
+.regex-head .len { font-weight: 600; letter-spacing: 0; text-transform: none; color: var(--sub-2); font-variant-numeric: tabular-nums; }
+.regex-head .len.over { color: var(--red); font-weight: 700; }
+.regex-source { margin: 0; padding: 14px; font-family: var(--font-mono); font-size: 12.5px; line-height: 1.7; word-break: break-all; white-space: pre-wrap; color: #1d1d1f; max-height: 240px; overflow: auto; }
+.regex-source.empty { color: var(--sub-2); font-family: var(--font-sans); }
+.regex-msg { margin: 0; padding: 0 14px 12px; font-size: 12px; color: var(--sub); }
+.regex-msg.error { color: var(--red); }
+.actions { display: flex; gap: 8px; margin-top: 14px; }
+
+.fav-list { display: flex; flex-direction: column; gap: 6px; }
+.fav-item { display: flex; align-items: center; gap: 8px; padding: 9px 11px; border-radius: var(--r-sm); background: var(--fill); cursor: pointer; transition: background var(--fast), transform var(--fast); }
+.fav-item:hover { background: var(--fill-strong); }
+.fav-item:active { transform: scale(0.99); }
+.fav-item .fav-name { flex: 1; min-width: 0; font-size: 13px; font-weight: 550; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.fav-item .fav-meta { font-size: 11px; color: var(--sub); flex: none; font-variant-numeric: tabular-nums; }
+.fav-item .fav-del { flex: none; width: 22px; height: 22px; display: grid; place-items: center; border-radius: 50%; color: var(--sub-2); font-size: 15px; line-height: 1; transition: background var(--fast), color var(--fast); }
+.fav-item .fav-del:hover { background: var(--red-tint); color: var(--red); }
+
+.hv-filters { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; margin-bottom: 12px; }
+.hv-price-group { display: inline-flex; align-items: center; gap: 6px; }
+.hv-price-group .input { width: 92px; }
+.hv-price-group select { appearance: none; -webkit-appearance: none; padding: 8px 26px 8px 11px; border-radius: var(--r-sm); border: 1px solid var(--line-strong); background: var(--card) url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'><path d='M3 4.6 6 7.8l3-3.2' fill='none' stroke='%2386868b' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round'/></svg>") no-repeat right 9px center; font-size: 13px; font-weight: 600; color: var(--ink); }
+.hv-list { display: flex; flex-direction: column; gap: 6px; max-height: 420px; overflow: auto; }
+.hv-item { display: flex; align-items: center; gap: 10px; padding: 10px 12px; border-radius: var(--r-sm); background: var(--fill); transition: background var(--fast); }
+.hv-item:hover { background: var(--fill-strong); }
+.hv-item .hv-main { flex: 1; min-width: 0; }
+.hv-item .hv-name { font-size: 13px; font-weight: 550; color: var(--ink); }
+.hv-item .hv-regex { font-family: var(--font-mono); font-size: 11px; color: var(--sub); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; margin-top: 2px; }
+.hv-item .hv-price { flex: none; font-size: 12px; font-weight: 650; color: #b26a00; font-variant-numeric: tabular-nums; }
+.hv-item .hv-type { flex: none; padding: 2px 7px; border-radius: var(--r-pill); background: var(--card); color: var(--sub); font-size: 10.5px; font-weight: 600; white-space: nowrap; }
+
+.footer { margin-top: 26px; padding: 16px 2px 0; border-top: 1px solid var(--line); display: flex; flex-wrap: wrap; gap: 8px 18px; align-items: center; font-size: 12px; color: var(--sub); }
+.footer .spacer { margin-left: auto; }
+.footer .author { color: var(--ink-2); font-weight: 550; }
+.status { font-size: 12px; color: var(--sub); }
+
+
+.notice-list { margin: 0; padding: 0 0 0 16px; font-size: 12px; line-height: 1.65; color: var(--sub); }
+.notice-list li { margin: 0 0 7px; }
+.notice-list li:last-child { margin-bottom: 0; }
+.notice-link { color: var(--accent); font-weight: 550; text-decoration: none; }
+.notice-link:hover { text-decoration: underline; }
+.bili-badge { display: inline-flex; align-items: center; padding: 1px 6px; margin-right: 5px; border-radius: var(--r-xs); background: rgba(255, 102, 153, 0.1); color: #d94a7f; font-size: 10px; font-weight: 700; letter-spacing: 0.02em; }
+
+@media (max-width: 1080px) { .workspace { grid-template-columns: minmax(0, 1fr); } .card.sticky { position: static; } }
+@media (max-width: 620px) {
+  .app { padding: 0 14px 24px; }
+  .toolbar-wrap { padding: 12px 0 10px; }
+  .toolbar { gap: 10px; padding: 11px 14px; border-radius: var(--r-md); }
+  .toolbar-end { margin-left: 0; width: 100%; }
+  .card { padding: 15px 15px; border-radius: var(--r-md); }
+  .segmented button { padding: 6px 13px; }
+  .affix-text { min-width: 100%; }
+  .hot-text { min-width: 100%; }
+  .summary-grid { grid-template-columns: 1fr 1fr; }
+  .tier-grid { grid-template-columns: 1fr 1fr; }
+}
+@media (prefers-reduced-motion: reduce) { * { transition-duration: 0.01ms !important; animation-duration: 0.01ms !important; } }
+</style>
+</head>
+<body>
+<div class="app">
+
+  <header class="toolbar-wrap">
+    <div class="toolbar">
+      <a class="brand" href="#" aria-label="PoE 2 正则工具">
+        <span class="brand-text">
+          <span class="brand-name" id="brand-name">PoE 2 正则工具</span>
+          <span class="brand-sub" id="brand-sub">流放之路 2 · 词缀正则生成器</span>
+        </span>
+      </a>
+      <nav class="segmented" id="tabs" aria-label="物品类型">
+        <button type="button" data-tab="waystone" aria-pressed="true" id="tab-waystone">引路石</button>
+        <button type="button" data-tab="tablet" aria-pressed="false" id="tab-tablet">石板</button>
+      </nav>
+      <div class="toolbar-end">
+        <label class="field-inline">
+          <span class="sr-only" id="language-label">输出语言</span>
+          <select id="language" aria-labelledby="language-label">
+            <option value="cn">简体中文</option>
+            <option value="tw">繁體中文</option>
+            <option value="en">English</option>
+          </select>
+        </label>
+      </div>
+    </div>
+  </header>
+
+  <main class="workspace">
+    <div class="column">
+
+      <section class="card" aria-label="基础筛选">
+        <div class="card-head">
+          <h2 id="primary-heading">引路石</h2>
+          <span class="badge" id="primary-badge">0</span>
+        </div>
+        <div id="primary-body"></div>
+      </section>
+
+      <section class="card" id="tier-card" aria-labelledby="tier-heading">
+        <div class="card-head">
+          <h2 id="tier-heading">引路石阶级</h2>
+          <span class="spacer"></span>
+          <button type="button" class="btn small ghost" id="tier-clear">清除</button>
+        </div>
+        <p class="hint mb" id="tier-hint"></p>
+        <div class="tier-grid" id="tier-body"></div>
+      </section>
+
+      <section class="card" id="summary-card" aria-labelledby="summary-heading">
+        <div class="card-head">
+          <h2 id="summary-heading">引路石效果筛选</h2>
+          <span class="spacer"></span>
+          <button type="button" class="btn small ghost" id="summary-clear">清除</button>
+        </div>
+        <p class="hint mb" id="summary-hint"></p>
+        <div class="summary-grid" id="summary-body"></div>
+      </section>
+
+      <section class="card is-hidden" id="hv-card" aria-labelledby="hv-heading">
+        <div class="card-head">
+          <h2 id="hv-heading">高价值石板词缀</h2>
+          <span class="spacer"></span>
+          <span class="badge gold" id="hv-count">0</span>
+        </div>
+        <p class="hint mb" id="hv-hint"></p>
+        <div class="hv-filters">
+          <div class="hv-price-group">
+            <span class="hint" id="hv-price-label">最低价格</span>
+            <input class="input" id="hv-price" type="number" inputmode="numeric" min="0" placeholder="不限">
+            <select id="hv-currency">
+              <option value="E">E</option>
+              <option value="C">C</option>
+              <option value="D">D</option>
+            </select>
+          </div>
+          <div class="chips" id="hv-types"></div>
+        </div>
+        <div class="hv-list" id="hv-list"></div>
+      </section>
+
+      <section class="card" aria-labelledby="affix-heading">
+        <div class="card-head">
+          <h2 id="affix-heading">词缀筛选</h2>
+          <span class="spacer"></span>
+          <span class="badge" id="visible-count">0</span>
+        </div>
+
+        <div class="hot-bar" id="hot-bar">
+          <span class="hot-label" id="hot-label">热门词缀</span>
+        </div>
+
+        <div class="search mb">
+          <span class="icon" aria-hidden="true">
+            <svg width="15" height="15" viewBox="0 0 16 16" fill="none" aria-hidden="true">
+              <circle cx="7" cy="7" r="4.6" stroke="currentColor" stroke-width="1.6"/>
+              <path d="M10.6 10.6 14 14" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/>
+            </svg>
+          </span>
+          <input id="search" type="search" autocomplete="off" spellcheck="false" placeholder="搜索词缀">
+          <span class="sr-only">搜索词缀</span>
+        </div>
+
+        <div class="control-row between mb-lg">
+          <div class="chips" role="group">
+            <button type="button" class="chip" id="toggle-prefix" aria-pressed="true">前缀</button>
+            <button type="button" class="chip" id="toggle-suffix" aria-pressed="true">后缀</button>
+          </div>
+          <div class="control-row row-tight">
+            <div class="segmented small" id="match-mode" role="group" aria-label="包含条件">
+              <button type="button" data-match="all" aria-pressed="true" id="match-all">满足全部</button>
+              <button type="button" data-match="any" aria-pressed="false" id="match-any">满足任一</button>
+            </div>
+            <button type="button" class="btn small danger" id="clear-selected">清空选中词缀</button>
+          </div>
+        </div>
+
+        <div id="affix-list" class="affix-groups"></div>
+      </section>
+    </div>
+
+    <aside class="column">
+      <section class="card sticky" aria-labelledby="result-heading">
+        <div class="card-head">
+          <h2 id="result-heading">已选条件</h2>
+          <span class="spacer"></span>
+          <span class="badge accent" id="condition-count">0</span>
+        </div>
+
+        <div id="summary"></div>
+
+        <div class="regex-box">
+          <div class="regex-head">
+            <span id="regex-heading">交易站搜索框</span>
+            <span class="spacer"></span>
+            <span class="len" id="regex-length"></span>
+          </div>
+          <pre class="regex-source empty" id="regex-source"></pre>
+          <p class="regex-msg" id="regex-message" role="status" aria-live="polite"></p>
+        </div>
+
+        <div class="actions">
+          <button type="button" class="btn primary grow" id="copy" disabled>复制正则</button>
+          <button type="button" class="btn danger" id="clear">清空</button>
+        </div>
+
+        <p class="status mt" id="status" role="status"></p>
+      </section>
+
+      <section class="card" aria-labelledby="fav-heading">
+        <div class="card-head">
+          <h2 id="fav-heading">最爱</h2>
+          <span class="spacer"></span>
+          <span class="badge" id="fav-count">0</span>
+        </div>
+        <div class="control-row mb">
+          <input class="input grow" id="fav-name" maxlength="24" placeholder="给这组条件起个名字">
+          <button type="button" class="btn small primary" id="fav-save">保存</button>
+        </div>
+        <div class="fav-list" id="fav-list"></div>
+      </section>
+
+      <section class="card" aria-labelledby="free-heading">
+        <div class="card-head">
+          <h2 id="free-heading">本工具完全免费</h2>
+        </div>
+        <ul class="notice-list" id="free-items">
+          <li>本工具由作者免费公开提供，所有功能均可直接使用，无需付费、无需购买授权。</li>
+          <li>作者未授权任何个人或组织以收费方式销售本工具、源码或相关文件。</li>
+          <li>如果您是通过付费方式获得本工具或相关文件，请注意：该收费行为与作者无关，作者未收到您的款项，也无法为您办理退款。</li>
+          <li>请直接联系向您收费的商家/平台协商退款；如遇无法联系或涉嫌欺诈，建议通过支付平台投诉、向消费者协会或相关监管部门反映，并保留付款凭证。</li>
+          <li>本声明仅为说明免费性质，不构成对任何第三方行为的担保或承诺。</li>
+        </ul>
+      </section>
+
+      <section class="card" aria-labelledby="sponsor-heading">
+        <div class="card-head">
+          <h2 id="sponsor-heading">自愿赞助</h2>
+        </div>
+        <p class="hint lh" id="sponsor-body"><span class="bili-badge">B站</span><a class="notice-link" href="https://space.bilibili.com/7132721" target="_blank" rel="noopener noreferrer">LMemory氿忆</a></p>
+      </section>
+    </aside>
+  </main>
+
+  <footer class="footer">
+    <span id="footer-brand">PoE 2 正则工具</span>
+    <span id="footer-version">Version 26.09.24</span>
+    <span class="spacer"></span>
+    <span id="footer-source">数据来源于：<a href="https://poe2db.tw/" target="_blank" rel="noopener noreferrer">Poe2DB</a>、<a href="https://space.bilibili.com/27021867" target="_blank" rel="noopener noreferrer">炖了一锅鱼</a></span>
+    <span class="author" id="footer-author">作者：LMemory氿忆</span>
+    <span id="footer-note">所有设置仅保存在当前浏览器</span>
+  </footer>
+</div>
+
+<script>
+window.POE2_DATA = {"meta":{"version":"1.4.0","built":"2026-09-24","counts":{"waystone":34,"tablet":92},"source":"poe2db.tw (Waystones prefix/suffix), tier-merged"},"waystone":[{"id":"wt001","side":"prefix","tpl":{"cn":"怪物造成相当于伤害 (5—24)% 的额外火焰伤害","tw":"怪物造成等同於傷害(5—24)%的額外火焰傷害","en":"Monsters deal (5—24)% of Damage as Extra Fire"},"lines":{"cn":["怪物造成相当于伤害 (5—24)% 的额外火焰伤害"],"tw":["怪物造成等同於傷害(5—24)%的額外火焰傷害"],"en":["Monsters deal (5—24)% of Damage as Extra Fire"]},"rng":[5,24],"ph":1,"tiers":4,"composite":false,"types":[],"unit":null},{"id":"wt002","side":"prefix","tpl":{"cn":"怪物造成相当于伤害 (5—24)% 的额外冰霜伤害","tw":"怪物造成等同於傷害(5—24)%的額外冰冷傷害","en":"Monsters deal (5—24)% of Damage as Extra Cold"},"lines":{"cn":["怪物造成相当于伤害 (5—24)% 的额外冰霜伤害"],"tw":["怪物造成等同於傷害(5—24)%的額外冰冷傷害"],"en":["Monsters deal (5—24)% of Damage as Extra Cold"]},"rng":[5,24],"ph":1,"tiers":4,"composite":false,"types":[],"unit":null},{"id":"wt003","side":"prefix","tpl":{"cn":"怪物造成相当于伤害 (5—24)% 的额外闪电伤害","tw":"怪物造成等同於傷害(5—24)%的額外閃電傷害","en":"Monsters deal (5—24)% of Damage as Extra Lightning"},"lines":{"cn":["怪物造成相当于伤害 (5—24)% 的额外闪电伤害"],"tw":["怪物造成等同於傷害(5—24)%的額外閃電傷害"],"en":["Monsters deal (5—24)% of Damage as Extra Lightning"]},"rng":[5,24],"ph":1,"tiers":4,"composite":false,"types":[],"unit":null},{"id":"wt004","side":"prefix","tpl":{"cn":"怪物伤害提高 (5—24)%","tw":"增加(5—24)%怪物傷害","en":"(5—24)% increased Monster Damage"},"lines":{"cn":["怪物伤害提高 (5—24)%"],"tw":["增加(5—24)%怪物傷害"],"en":["(5—24)% increased Monster Damage"]},"rng":[5,24],"ph":1,"tiers":4,"composite":false,"types":[],"unit":null},{"id":"wt005","side":"prefix","tpl":{"cn":"怪物的攻击，施法，移动速度提高 (10—15)%","tw":"怪物增加(10—15)%攻擊、施放、移動速度","en":"Monsters have (10—15)% increased Attack, Cast and Movement Speed"},"lines":{"cn":["怪物的攻击，施法，移动速度提高 (10—15)%"],"tw":["怪物增加(10—15)%攻擊、施放、移動速度"],"en":["Monsters have (10—15)% increased Attack, Cast and Movement Speed"]},"rng":[10,15],"ph":1,"tiers":1,"composite":false,"types":[],"unit":null},{"id":"wt006","side":"prefix","tpl":{"cn":"怪物暴击率提高 (80—300)% +(11—30)% 怪物暴击伤害加成","tw":"增加(80—300)%怪物的暴擊率 +(11—30)%怪物暴擊傷害加成","en":"Monsters have (80—300)% increased Critical Hit Chance Monsters have +(11—30)% Critical Damage Bonus"},"lines":{"cn":["怪物暴击率提高 (80—300)%","+(11—30)% 怪物暴击伤害加成"],"tw":["增加(80—300)%怪物的暴擊率","+(11—30)%怪物暴擊傷害加成"],"en":["Monsters have (80—300)% increased Critical Hit Chance","Monsters have +(11—30)% Critical Damage Bonus"]},"rng":[80,300],"ph":1,"tiers":4,"composite":true,"types":[],"unit":null},{"id":"wt007","side":"prefix","tpl":{"cn":"怪物生命总增 (10—30)%","tw":"(10—30)%更多怪物生命","en":"(10—30)% more Monster Life"},"lines":{"cn":["怪物生命总增 (10—30)%"],"tw":["(10—30)%更多怪物生命"],"en":["(10—30)% more Monster Life"]},"rng":[10,30],"ph":1,"tiers":4,"composite":false,"types":[],"unit":null},{"id":"wt008","side":"suffix","tpl":{"cn":"+(20—40)% 怪物的元素抗性","tw":"+(20—40)%怪物元素抗性","en":"+(20—40)% Monster Elemental Resistances"},"lines":{"cn":["+(20—40)% 怪物的元素抗性"],"tw":["+(20—40)%怪物元素抗性"],"en":["+(20—40)% Monster Elemental Resistances"]},"rng":[20,40],"ph":1,"tiers":4,"composite":false,"types":[],"unit":null},{"id":"wt009","side":"suffix","tpl":{"cn":"怪物具有护甲","tw":"怪物為裝甲的","en":"Monsters are Armoured"},"lines":{"cn":["怪物具有护甲"],"tw":["怪物為裝甲的"],"en":["Monsters are Armoured"]},"rng":null,"ph":0,"tiers":1,"composite":false,"types":[],"unit":null},{"id":"wt010","side":"suffix","tpl":{"cn":"怪物具有闪避","tw":"怪物為閃避的","en":"Monsters are Evasive"},"lines":{"cn":["怪物具有闪避"],"tw":["怪物為閃避的"],"en":["Monsters are Evasive"]},"rng":null,"ph":0,"tiers":1,"composite":false,"types":[],"unit":null},{"id":"wt011","side":"suffix","tpl":{"cn":"怪物将生命上限的 (12—25)% 转化为额外能量护盾上限","tw":"怪物獲得等同於最大生命(12—25)%的額外最大能量護盾","en":"Monsters gain (12—25)% of maximum Life as Extra maximum Energy Shield"},"lines":{"cn":["怪物将生命上限的 (12—25)% 转化为额外能量护盾上限"],"tw":["怪物獲得等同於最大生命(12—25)%的額外最大能量護盾"],"en":["Monsters gain (12—25)% of maximum Life as Extra maximum Energy Shield"]},"rng":[12,25],"ph":1,"tiers":1,"composite":false,"types":[],"unit":null},{"id":"wt012","side":"prefix","tpl":{"cn":"怪物的击中有 (13—40)% 的几率造成中毒","tw":"怪物有(13—40)%機率在擊中時造成中毒","en":"Monsters have (13—40)% chance to Poison on Hit"},"lines":{"cn":["怪物的击中有 (13—40)% 的几率造成中毒"],"tw":["怪物有(13—40)%機率在擊中時造成中毒"],"en":["Monsters have (13—40)% chance to Poison on Hit"]},"rng":[13,40],"ph":1,"tiers":4,"composite":false,"types":[],"unit":null},{"id":"wt013","side":"prefix","tpl":{"cn":"怪物的击中有 (5—25)% 的几率造成流血","tw":"怪物有(5—25)%機率在擊中時引起流血","en":"Monsters have (5—25)% chance to inflict Bleeding on Hit"},"lines":{"cn":["怪物的击中有 (5—25)% 的几率造成流血"],"tw":["怪物有(5—25)%機率在擊中時引起流血"],"en":["Monsters have (5—25)% chance to inflict Bleeding on Hit"]},"rng":[5,25],"ph":1,"tiers":4,"composite":false,"types":[],"unit":null},{"id":"wt014","side":"suffix","tpl":{"cn":"怪物的异常状态阈值提高 (30—79)% 怪物的晕眩阈值提高 (30—79)%","tw":"增加(30—79)%怪物異常狀態門檻 增加(30—79)%怪物的暈眩門檻","en":"Monsters have (30—79)% increased Ailment Threshold Monsters have (30—79)% increased Stun Threshold"},"lines":{"cn":["怪物的异常状态阈值提高 (30—79)%","怪物的晕眩阈值提高 (30—79)%"],"tw":["增加(30—79)%怪物異常狀態門檻","增加(30—79)%怪物的暈眩門檻"],"en":["Monsters have (30—79)% increased Ailment Threshold","Monsters have (30—79)% increased Stun Threshold"]},"rng":[30,79],"ph":1,"tiers":4,"composite":true,"types":[],"unit":null},{"id":"wt015","side":"prefix","tpl":{"cn":"怪物粉碎护甲，相当于造成物理伤害的 (15—45)%","tw":"怪物破壞的護甲值等同於造成的(15—45)%物理傷害","en":"Monsters Break Armour equal to (15—45)% of Physical Damage dealt"},"lines":{"cn":["怪物粉碎护甲，相当于造成物理伤害的 (15—45)%"],"tw":["怪物破壞的護甲值等同於造成的(15—45)%物理傷害"],"en":["Monsters Break Armour equal to (15—45)% of Physical Damage dealt"]},"rng":[15,45],"ph":1,"tiers":4,"composite":false,"types":[],"unit":null},{"id":"wt016","side":"prefix","tpl":{"cn":"怪物的命中值提高 (10—50)%","tw":"怪物增加(10—50)%命中值","en":"Monsters have (10—50)% increased Accuracy Rating"},"lines":{"cn":["怪物的命中值提高 (10—50)%"],"tw":["怪物增加(10—50)%命中值"],"en":["Monsters have (10—50)% increased Accuracy Rating"]},"rng":[10,50],"ph":1,"tiers":4,"composite":false,"types":[],"unit":null},{"id":"wt017","side":"prefix","tpl":{"cn":"怪物造成相当于伤害 (5—24)% 的额外混沌伤害","tw":"怪物造成等同於傷害(5—24)%的額外混沌傷害","en":"Monsters deal (5—24)% of Damage as Extra Chaos"},"lines":{"cn":["怪物造成相当于伤害 (5—24)% 的额外混沌伤害"],"tw":["怪物造成等同於傷害(5—24)%的額外混沌傷害"],"en":["Monsters deal (5—24)% of Damage as Extra Chaos"]},"rng":[5,24],"ph":1,"tiers":4,"composite":false,"types":[],"unit":null},{"id":"wt018","side":"prefix","tpl":{"cn":"怪物的晕眩积蓄提高 (50—110)%","tw":"增加(50—110)%怪物的暈眩累積","en":"Monsters have (50—110)% increased Stun Buildup"},"lines":{"cn":["怪物的晕眩积蓄提高 (50—110)%"],"tw":["增加(50—110)%怪物的暈眩累積"],"en":["Monsters have (50—110)% increased Stun Buildup"]},"rng":[50,110],"ph":1,"tiers":4,"composite":false,"types":[],"unit":null},{"id":"wt019","side":"suffix","tpl":{"cn":"怪物的元素异常状态应用提高 (60—130)%","tw":"怪物增加(60—130)%元素異常狀態施加","en":"Monster have (60—130)% increased Elemental Ailment Application"},"lines":{"cn":["怪物的元素异常状态应用提高 (60—130)%"],"tw":["怪物增加(60—130)%元素異常狀態施加"],"en":["Monster have (60—130)% increased Elemental Ailment Application"]},"rng":[60,130],"ph":1,"tiers":4,"composite":false,"types":[],"unit":null},{"id":"wt020","side":"prefix","tpl":{"cn":"怪物可以发射 2—3 个额外投射物","tw":"怪物發射2—3個額外投射物","en":"Monsters fire 2—3 additional Projectiles"},"lines":{"cn":["怪物可以发射 2—3 个额外投射物"],"tw":["怪物發射2—3個額外投射物"],"en":["Monsters fire 2—3 additional Projectiles"]},"rng":[2,3],"ph":0,"tiers":2,"composite":false,"types":[],"unit":null},{"id":"wt021","side":"suffix","tpl":{"cn":"怪物效果区域的提高 50%","tw":"增加怪物50%範圍效果","en":"Monsters have 50% increased Area of Effect"},"lines":{"cn":["怪物效果区域的提高 50%"],"tw":["增加怪物50%範圍效果"],"en":["Monsters have 50% increased Area of Effect"]},"rng":[50,50],"ph":0,"tiers":1,"composite":false,"types":[],"unit":null},{"id":"wt022","side":"suffix","tpl":{"cn":"玩家周期性受到衰弱诅咒","tw":"玩家正在持續被衰弱詛咒","en":"Players are periodically Cursed with Enfeeble"},"lines":{"cn":["玩家周期性受到衰弱诅咒"],"tw":["玩家正在持續被衰弱詛咒"],"en":["Players are periodically Cursed with Enfeeble"]},"rng":null,"ph":0,"tiers":1,"composite":false,"types":[],"unit":null},{"id":"wt023","side":"suffix","tpl":{"cn":"玩家周期性受到时空锁链诅咒","tw":"玩家正在持續被時空鎖鏈詛咒","en":"Players are periodically Cursed with Temporal Chains"},"lines":{"cn":["玩家周期性受到时空锁链诅咒"],"tw":["玩家正在持續被時空鎖鏈詛咒"],"en":["Players are periodically Cursed with Temporal Chains"]},"rng":null,"ph":0,"tiers":1,"composite":false,"types":[],"unit":null},{"id":"wt024","side":"suffix","tpl":{"cn":"玩家周期性受到元素要害诅咒","tw":"玩家正在持續被元素要害詛咒","en":"Players are periodically Cursed with Elemental Weakness"},"lines":{"cn":["玩家周期性受到元素要害诅咒"],"tw":["玩家正在持續被元素要害詛咒"],"en":["Players are periodically Cursed with Elemental Weakness"]},"rng":null,"ph":0,"tiers":1,"composite":false,"types":[],"unit":null},{"id":"wt025","side":"suffix","tpl":{"cn":"区域内有点燃地面","tw":"區域中有多個點燃地面","en":"Area has patches of Ignited Ground"},"lines":{"cn":["区域内有点燃地面"],"tw":["區域中有多個點燃地面"],"en":["Area has patches of Ignited Ground"]},"rng":null,"ph":0,"tiers":4,"composite":false,"types":[],"unit":null},{"id":"wt026","side":"suffix","tpl":{"cn":"区域内有冰缓地面","tw":"區域會有多塊冰緩地面","en":"Area has patches of Chilled Ground"},"lines":{"cn":["区域内有冰缓地面"],"tw":["區域會有多塊冰緩地面"],"en":["Area has patches of Chilled Ground"]},"rng":null,"ph":0,"tiers":4,"composite":false,"types":[],"unit":null},{"id":"wt027","side":"suffix","tpl":{"cn":"区域内有感电地面","tw":"區域會有多塊感電地面","en":"Area has patches of Shocked Ground"},"lines":{"cn":["区域内有感电地面"],"tw":["區域會有多塊感電地面"],"en":["Area has patches of Shocked Ground"]},"rng":null,"ph":0,"tiers":4,"composite":false,"types":[],"unit":null},{"id":"wt028","side":"prefix","tpl":{"cn":"召唤生物的伤害穿透 (6—16)% 元素抗性","tw":"怪物傷害穿透(6—16)%元素抗性","en":"Monster Damage Penetrates (6—16)% Elemental Resistances"},"lines":{"cn":["召唤生物的伤害穿透 (6—16)% 元素抗性"],"tw":["怪物傷害穿透(6—16)%元素抗性"],"en":["Monster Damage Penetrates (6—16)% Elemental Resistances"]},"rng":[6,16],"ph":1,"tiers":4,"composite":false,"types":[],"unit":null},{"id":"wt029","side":"suffix","tpl":{"cn":"玩家的抗性上限 (-10—-3)%","tw":"玩家(-10—-3)%最大抗性","en":"(-10—-3)% maximum Player Resistances"},"lines":{"cn":["玩家的抗性上限 (-10—-3)%"],"tw":["玩家(-10—-3)%最大抗性"],"en":["(-10—-3)% maximum Player Resistances"]},"rng":[-10,-3],"ph":1,"tiers":4,"composite":false,"types":[],"unit":null},{"id":"wt030","side":"suffix","tpl":{"cn":"玩家获得的药剂充能降低 (20—35)%","tw":"減少(20—35)%玩家獲得的藥劑充能","en":"Players gain (20—35)% reduced Flask Charges"},"lines":{"cn":["玩家获得的药剂充能降低 (20—35)%"],"tw":["減少(20—35)%玩家獲得的藥劑充能"],"en":["Players gain (20—35)% reduced Flask Charges"]},"rng":[20,35],"ph":1,"tiers":3,"composite":false,"types":[],"unit":null},{"id":"wt031","side":"suffix","tpl":{"cn":"玩家的生命和能量护盾总回复速度总降 (20—40)%","tw":"玩家擁有(20—40)%更少生命和能量護盾恢復率","en":"Players have (20—40)% less Recovery Rate of Life and Energy Shield"},"lines":{"cn":["玩家的生命和能量护盾总回复速度总降 (20—40)%"],"tw":["玩家擁有(20—40)%更少生命和能量護盾恢復率"],"en":["Players have (20—40)% less Recovery Rate of Life and Energy Shield"]},"rng":[20,40],"ph":1,"tiers":3,"composite":false,"types":[],"unit":null},{"id":"wt032","side":"suffix","tpl":{"cn":"玩家的冷却回复率总降 (15—30)%","tw":"玩家有(15—30)%更少冷卻時間恢復率","en":"Players have (15—30)% less Cooldown Recovery Rate"},"lines":{"cn":["玩家的冷却回复率总降 (15—30)%"],"tw":["玩家有(15—30)%更少冷卻時間恢復率"],"en":["Players have (15—30)% less Cooldown Recovery Rate"]},"rng":[15,30],"ph":1,"tiers":3,"composite":false,"types":[],"unit":null},{"id":"wt033","side":"suffix","tpl":{"cn":"怪物受到的暴击伤害降低 (15—30)%","tw":"怪物遭暴擊時，減少(15—30)%承受的額外傷害","en":"Monsters take (15—30)% reduced Extra Damage from Critical Hits"},"lines":{"cn":["怪物受到的暴击伤害降低 (15—30)%"],"tw":["怪物遭暴擊時，減少(15—30)%承受的額外傷害"],"en":["Monsters take (15—30)% reduced Extra Damage from Critical Hits"]},"rng":[15,30],"ph":1,"tiers":3,"composite":false,"types":[],"unit":null},{"id":"wt034","side":"suffix","tpl":{"cn":"怪物受到的诅咒效果总降 (20—50)%","tw":"怪物身上的詛咒具有(20—50)%更少效果","en":"(20—50)% less effect of Curses on Monsters"},"lines":{"cn":["怪物受到的诅咒效果总降 (20—50)%"],"tw":["怪物身上的詛咒具有(20—50)%更少效果"],"en":["(20—50)% less effect of Curses on Monsters"]},"rng":[20,50],"ph":1,"tiers":3,"composite":false,"types":[],"unit":null}],"tablet":[{"id":"wt-1","side":"prefix","tpl":{"cn":"地图包含 (2—3) 个额外的稀有宝箱","tw":"地圖內含有額外的(2—3)個稀有箱子","en":"Map contains (2—3) additional Rare Chests"},"rng":[2,3],"ph":1,"tiers":1,"types":[],"unit":null},{"id":"wt-2","side":"prefix","tpl":{"cn":"地图包含 1 个额外的精华","tw":"地圖內含有額外的1個精髓","en":"Map contains 1 additional Essences"},"rng":null,"ph":1,"tiers":1,"types":[],"unit":null},{"id":"wt-3","side":"prefix","tpl":{"cn":"地图包含 1 个额外的召唤法阵","tw":"地圖內含有額外的1個召喚法陣","en":"Map contains 1 additional Summoning Circles"},"rng":null,"ph":1,"tiers":1,"types":[],"unit":null},{"id":"wt-4","side":"prefix","tpl":{"cn":"地图内的经验值获取提高 (12—18)%","tw":"增加(12—18)%地圖內所獲取的經驗量","en":"% increased Experience gain in Map"},"rng":[12,18],"ph":1,"tiers":1,"types":[],"unit":null},{"id":"wt-5","side":"prefix","tpl":{"cn":"地图内怪物群规模提高 (5—7)%","tw":"增加(5—7)%地圖內的怪物群大小","en":"% increased Pack Size in Map"},"rng":[5,7],"ph":1,"tiers":1,"types":[],"unit":null},{"id":"wt-6","side":"prefix","tpl":{"cn":"地图内会出现 1 个额外的阿兹莫里之灵","tw":"地圖內含有1個額外阿茲莫里魂靈","en":"Map contains 1 additional Azmeri Spirits"},"rng":null,"ph":1,"tiers":1,"types":["overseer"],"unit":null},{"id":"wt-7","side":"prefix","tpl":{"cn":"地图内会出现 1 个额外的盗贼流放者","tw":"地圖內含有1名額外盜賊流亡者","en":"Map is inhabited by 1 additional Rogue Exiles"},"rng":null,"ph":1,"tiers":1,"types":["overseer"],"unit":null},{"id":"wt-8","side":"prefix","tpl":{"cn":"地图内获取物品的稀有度提高 (8—12)%","tw":"增加(8—12)%地圖內找到的物品稀有度","en":"% increased Rarity of Items found in Map"},"rng":[8,12],"ph":1,"tiers":1,"types":[],"unit":null},{"id":"wt-9","side":"prefix","tpl":{"cn":"地图内魔法怪物数量提高 (30—40)%","tw":"增加(30—40)%地圖含有的魔法怪物","en":"Map has (30—40)% increased Magic Monsters"},"rng":[30,40],"ph":1,"tiers":1,"types":[],"unit":null},{"id":"wt-10","side":"prefix","tpl":{"cn":"地图内稀有怪物数量提高 (25—35)%","tw":"增加(25—35)%地圖含有的稀有怪物數量","en":"Map has (25—35)% increased number of Rare Monsters"},"rng":[25,35],"ph":1,"tiers":1,"types":[],"unit":null},{"id":"wt-11","side":"prefix","tpl":{"cn":"地图内找到的金币数量提高 (25—35)%","tw":"增加(25—35)%地圖內所獲取的金幣數量","en":"% increased Gold found in Map"},"rng":[25,35],"ph":1,"tiers":1,"types":[],"unit":null},{"id":"wt-12","side":"prefix","tpl":{"cn":"地图上的怪物稀有度提高 (15—20)%","tw":"地圖增加(15—20)%怪物稀有度","en":"Map has (15—20)% increased Monster Rarity"},"rng":[15,20],"ph":1,"tiers":1,"types":[],"unit":null},{"id":"wt-13","side":"prefix","tpl":{"cn":"怪物的效能提高 (10—15)%","tw":"增加(10—15)%怪物的效用","en":"Monsters have (10—15)% increased Effectiveness"},"rng":[10,15],"ph":1,"tiers":1,"types":[],"unit":null},{"id":"wt-14","side":"suffix","tpl":{"cn":"传奇怪物额外具有 1 个词缀","tw":"傳奇怪物會擁有1個額外的詞綴","en":"Unique Monsters have 1 additional Modifier"},"rng":null,"ph":1,"tiers":1,"types":[],"unit":null},{"id":"wt-15","side":"suffix","tpl":{"cn":"地图包含 (1—2) 个额外的阿兹莫里之灵","tw":"地圖內含有額外的(1—2)個阿茲莫里魂靈","en":"Map contains (1—2) additional Azmeri Spirits"},"rng":[1,2],"ph":1,"tiers":1,"types":["overseer"],"unit":null},{"id":"wt-16","side":"suffix","tpl":{"cn":"地图包含 (1—2) 个额外的保险箱","tw":"地圖內含有額外的(1—2)個保險箱","en":"Map contains (1—2) additional Strongboxes"},"rng":[1,2],"ph":1,"tiers":1,"types":[],"unit":null},{"id":"wt-17","side":"suffix","tpl":{"cn":"地图包含 (1—2) 个额外的精华","tw":"地圖內含有額外的(1—2)個精髓","en":"Map contains (1—2) additional Essences"},"rng":[1,2],"ph":1,"tiers":1,"types":[],"unit":null},{"id":"wt-18","side":"suffix","tpl":{"cn":"地图包含 (1—2) 个额外的神龛","tw":"地圖內含有額外的(1—2)個神殿","en":"Map contains (1—2) additional Shrines"},"rng":[1,2],"ph":1,"tiers":1,"types":[],"unit":null},{"id":"wt-19","side":"suffix","tpl":{"cn":"地图包含 1 个额外的保险箱","tw":"地圖內含有額外的1個保險箱","en":"Map contains 1 additional Strongboxes"},"rng":null,"ph":1,"tiers":1,"types":[],"unit":null},{"id":"wt-20","side":"suffix","tpl":{"cn":"地图包含 1 个额外的神龛","tw":"地圖內含有額外的1個神殿","en":"Map contains 1 additional Shrines"},"rng":null,"ph":1,"tiers":1,"types":[],"unit":null},{"id":"wt-21","side":"suffix","tpl":{"cn":"地图包含保险箱的几率提高 (70—100)%","tw":"增加(70—100)%地圖內有含有保險箱的機率","en":"Map has (70—100)% increased chance to contain Strongboxes"},"rng":[70,100],"ph":1,"tiers":1,"types":[],"unit":null},{"id":"wt-22","side":"suffix","tpl":{"cn":"地图包含精华的几率提高 (70—100)%","tw":"增加(70—100)%地圖內含有精髓的機率","en":"Map has (70—100)% increased chance to contain Essences"},"rng":[70,100],"ph":1,"tiers":1,"types":[],"unit":null},{"id":"wt-23","side":"suffix","tpl":{"cn":"地图包含神龛的几率提高 (70—100)%","tw":"增加(70—100)%地圖內含有神殿的機率","en":"Map has (70—100)% increased chance to contain Shrines"},"rng":[70,100],"ph":1,"tiers":1,"types":[],"unit":null},{"id":"wt-24","side":"suffix","tpl":{"cn":"地图包含召唤法阵的几率提高 (70—100)%","tw":"增加(70—100)%地圖內有含有召喚法陣的機率","en":"Map has (70—100)% increased chance to contain a Summoning Circle"},"rng":[70,100],"ph":1,"tiers":1,"types":[],"unit":null},{"id":"wt-25","side":"suffix","tpl":{"cn":"地图额外包含 1 个深渊","tw":"地圖內含有額外1道深淵","en":"Map contains 1 additional Abysses"},"rng":null,"ph":1,"tiers":1,"types":["abyss"],"unit":null},{"id":"wt-26","side":"suffix","tpl":{"cn":"地图裂隙中的怪物群落规模提高 (5—15)%","tw":"增加(5—15)%地圖內裂痕的怪物群大小","en":"Breaches in Map have (5—15)% increased Pack Size"},"rng":[5,15],"ph":1,"tiers":1,"types":["breach"],"unit":null},{"id":"wt-27","side":"suffix","tpl":{"cn":"地图内的惊悸迷雾生成的破溃之镜数量提高 (15—30)%","tw":"增加(15—30)%地圖內的譫妄生成破碎之鏡","en":"Delirium Fog in Map spawns (15—30)% increased Fracturing Mirrors"},"rng":[15,30],"ph":1,"tiers":1,"types":["delirium"],"unit":null},{"id":"wt-28","side":"suffix","tpl":{"cn":"地图内的惊悸迷雾在消散前额外持续 (6—12) 秒","tw":"地圖內含有的譫妄迷霧會在消散前額外持續(6—12)秒","en":"Delirium Fog in Map lasts (6—12) additional seconds before dissipating"},"rng":[6,12],"ph":1,"tiers":1,"types":["delirium"],"unit":null},{"id":"wt-29","side":"suffix","tpl":{"cn":"地图内的惊悸迷雾遭遇战生成传奇首领的几率总增 (15—30)%","tw":"地圖內的譫妄有(15—30)%更多機率生成傳奇頭目","en":"Delirium Encounters in Map are (15—30)% more likely to spawn Unique Bosses"},"rng":[15,30],"ph":1,"tiers":1,"types":["delirium"],"unit":null},{"id":"wt-30","side":"suffix","tpl":{"cn":"地图内的梦魇拟像裂片堆叠数量提高 (15—30)%","tw":"增加(15—30)%地圖內掉落的幻像斷片數量","en":"% increased Stack size of Simulacrum Splinters found in Map"},"rng":[15,30],"ph":1,"tiers":1,"types":["delirium"],"unit":null},{"id":"wt-31","side":"suffix","tpl":{"cn":"地图内的驱灵祭坛可以额外重置恩典 (1—3) 次","tw":"地圖內的祭祀神壇可以額外重骰(1—3)次","en":"Ritual Altars in Map allow rerolling Favours (1—3) additional times"},"rng":[1,3],"ph":1,"tiers":1,"types":["ritual"],"unit":null},{"id":"wt-32","side":"suffix","tpl":{"cn":"地图内的驱灵祭坛再生怪物为稀有怪物的几率提高 (25—40)%","tw":"地圖內的祭祀神壇所復活的怪物增加(25—40)%為稀有怪物的機率","en":"Revived Monsters from Ritual Altars in Map have (25—40)% increased chance to be Rare"},"rng":[25,40],"ph":1,"tiers":1,"types":["ritual"],"unit":null},{"id":"wt-33","side":"suffix","tpl":{"cn":"地图内的维金残片有 +(25—35)% 的几率添加一个额外的符文词缀","tw":"地圖中的維里西姆遺物擁有+(25—35)%機率添加一條額外符文詞綴","en":"Verisium Remnants have +(25—35)% chance to add an additional Runic Modifier in Map"},"rng":[25,35],"ph":1,"tiers":1,"types":["expedition"],"unit":null},{"id":"wt-34","side":"suffix","tpl":{"cn":"地图内的先祖秘藏包含 (1—2) 个埋藏的保险箱","tw":"地圖中的探險含有(1—2)個埋藏的保險箱","en":"Expeditions contain (1—2) buried Strongboxes in Map"},"rng":[1,2],"ph":1,"tiers":1,"types":["expedition"],"unit":null},{"id":"wt-35","side":"suffix","tpl":{"cn":"地图内的先祖秘藏包含 (1—2) 个瓦尔遗物","tw":"Expeditions contain (1—2) Vaal Relics in Map","en":"Expeditions contain (1—2) Vaal Relics in Map"},"rng":[1,2],"ph":1,"tiers":1,"types":["expedition"],"unit":null},{"id":"wt-36","side":"suffix","tpl":{"cn":"地图内的先祖秘藏额外包含 (1—2) 个被坚冰包裹的首领","tw":"地圖中的探險含有(1—2)個額外封存於冰霜中的頭目","en":"Expeditions contain (1—2) Additional Bosses encased in ice in Map"},"rng":[1,2],"ph":1,"tiers":1,"types":["expedition"],"unit":null},{"id":"wt-37","side":"suffix","tpl":{"cn":"地图内的先祖秘藏额外包含 (1—2) 个维金哨兵","tw":"地圖中的探險含有(1—2)個額外維里西姆守望","en":"Expeditions contain (1—2) Additional Verisium Sentries in Map"},"rng":[1,2],"ph":1,"tiers":1,"types":["expedition"],"unit":null},{"id":"wt-38","side":"suffix","tpl":{"cn":"地图内符文怪物标记的数量提高 (15—25)%","tw":"增加(15—25)%地圖內含有的符文怪物印記的數量","en":"Map contains (15—25)% increased number of Runic Monster Markers"},"rng":[15,25],"ph":1,"tiers":1,"types":["expedition"],"unit":null},{"id":"wt-39","side":"suffix","tpl":{"cn":"地图内符文怪物掉落的先祖秘藏日志数量提高 (15—25)%","tw":"增加(15—25)%地圖內的探險事件所生成的符文怪物掉落的探險日誌數量","en":"% increased Quantity of Expedition Logbooks dropped by Runic Monsters in Map"},"rng":[15,25],"ph":1,"tiers":1,"types":["expedition"],"unit":null},{"id":"wt-40","side":"suffix","tpl":{"cn":"地图内惊悸迷雾怪物的怪物群规模提高 (15—30)%","tw":"增加(15—30)%地圖內的譫妄怪物怪物群大小","en":"Delirium Monsters in Map have (15—30)% increased Pack Size"},"rng":[15,30],"ph":1,"tiers":1,"types":["delirium"],"unit":null},{"id":"wt-41","side":"suffix","tpl":{"cn":"地图内惊悸迷雾消散速度减慢 (20—30)%","tw":"減少(20—30)%地圖內的譫妄迷霧消散速度","en":"Delirium Fog in Map dissipates (20—30)% slower"},"rng":[20,30],"ph":1,"tiers":1,"types":["delirium"],"unit":null},{"id":"wt-42","side":"suffix","tpl":{"cn":"地图内驱灵恩典为预兆的几率提高 (35—70)%","tw":"增加(35—70)%地圖內的祭祀神壇獎勵為預兆的機率","en":"Ritual Favours in Map have (35—70)% increased chance to be Omens"},"rng":[35,70],"ph":1,"tiers":1,"types":["ritual"],"unit":null},{"id":"wt-43","side":"suffix","tpl":{"cn":"地图内驱灵祭坛上延时的恩典重现速度加快 (25—40)%","tw":"地圖內的祭祀神壇所延遲的恩惠之物出現速度加快(25—40)%","en":"Favours Deferred at Ritual Altars in Map reappear (25—40)% sooner"},"rng":[25,40],"ph":1,"tiers":1,"types":["ritual"],"unit":null},{"id":"wt-44","side":"suffix","tpl":{"cn":"地图内驱灵祭坛再生怪物为魔法怪物的几率提高 (35—70)%","tw":"地圖內的祭祀神壇所復活的怪物增加(35—70)%為魔法怪物的機率","en":"Revived Monsters from Ritual Altars in Map have (35—70)% increased chance to be Magic"},"rng":[35,70],"ph":1,"tiers":1,"types":["ritual"],"unit":null},{"id":"wt-45","side":"suffix","tpl":{"cn":"地图内稀有先祖秘藏怪物数量提高 (25—35)%","tw":"增加(25—35)%地圖內的探險事件含有稀有怪物的數量","en":"% increased number of Rare Expedition Monsters in Map"},"rng":[25,35],"ph":1,"tiers":1,"types":["expedition"],"unit":null},{"id":"wt-46","side":"suffix","tpl":{"cn":"地图内先祖秘藏爆炸范围提高 (5—10)%","tw":"增加(5—10)%地圖內的探險爆炸範圍","en":"(5—10)% increased Expedition Explosive Area of Effect in Map"},"rng":[5,10],"ph":1,"tiers":1,"types":["expedition"],"unit":null},{"id":"wt-47","side":"suffix","tpl":{"cn":"地图内先祖秘藏炸药放置范围提高 (10—20)%","tw":"增加(10—20)%地圖內的探險事件放置炸藥的距離","en":"% increased Expedition Explosive Placement Range in Map"},"rng":[10,20],"ph":1,"tiers":1,"types":["expedition"],"unit":null},{"id":"wt-48","side":"suffix","tpl":{"cn":"地图内在驱灵祭坛献祭怪物提供的贡品提高 (18—30)%","tw":"增加(18—30)%在地圖內的祭祀神壇所獻祭的怪物提供的貢禮數量","en":"Monsters Sacrificed at Ritual Altars in Map grant (18—30)% increased Tribute"},"rng":[18,30],"ph":1,"tiers":1,"types":["ritual"],"unit":null},{"id":"wt-49","side":"suffix","tpl":{"cn":"地图内在驱灵祭坛延时恩典消耗的贡品降低 (20—30)%","tw":"減少(20—30)%地圖內的祭祀神壇所需的貢禮數量","en":"Deferring Favours at Ritual Altars in Map costs (20—30)% reduced Tribute"},"rng":[20,30],"ph":1,"tiers":1,"types":["ritual"],"unit":null},{"id":"wt-50","side":"suffix","tpl":{"cn":"地图内在驱灵祭坛重置恩典消耗的贡品降低 (20—30)%","tw":"減少(20—30)%地圖內的祭祀神壇重骰所需的貢禮數量","en":"Rerolling Favours at Ritual Altars in Map costs (20—30)% reduced Tribute"},"rng":[20,30],"ph":1,"tiers":1,"types":["ritual"],"unit":null},{"id":"wt-51","side":"suffix","tpl":{"cn":"地图内在驱灵祭坛重置恩典有 (3—6)% 几率不消耗贡品","tw":"地圖內的祭祀神壇有(3—6)%機率不消耗貢禮","en":"Favours Rerolled at Ritual Altars in Map have (3—6)% chance to cost no Tribute"},"rng":[3,6],"ph":1,"tiers":1,"types":["ritual"],"unit":null},{"id":"wt-52","side":"suffix","tpl":{"cn":"地图内找到的引路石数量提高 (30—40)%","tw":"增加(30—40)%地圖內找到的換界石數量","en":"% increased Quantity of Waystones found in Map"},"rng":[30,40],"ph":1,"tiers":1,"types":[],"unit":null},{"id":"wt-53","side":"suffix","tpl":{"cn":"地图内最先被开掘的 (1—2) 个符文怪物将为稀有怪物","tw":"地圖中前(1—2)名出土的符文怪物會是稀有怪物","en":"The first (1—2) unearthed Runic Monsters will be Rare Monsters in Map"},"rng":[1,2],"ph":1,"tiers":1,"types":["expedition"],"unit":null},{"id":"wt-54","side":"suffix","tpl":{"cn":"地图首领掉落的物品数量提高 (13—20)%","tw":"增加(13—20)%地圖頭目的掉落物品數量","en":"% increased Quantity of Items dropped by Map Bosses"},"rng":[13,20],"ph":1,"tiers":1,"types":[],"unit":null},{"id":"wt-55","side":"suffix","tpl":{"cn":"地图首领掉落的物品稀有度提高 (35—60)%","tw":"增加(35—60)%地圖頭目掉落物品的稀有度","en":"% increased Rarity of Items dropped by Map Bosses"},"rng":[35,60],"ph":1,"tiers":1,"types":[],"unit":null},{"id":"wt-56","side":"suffix","tpl":{"cn":"地图首领掉落的引路石数量提高 (18—30)%","tw":"增加(18—30)%地圖頭目掉落的換界石數量","en":"% increased Quantity of Waystones dropped by Map Bosses"},"rng":[18,30],"ph":1,"tiers":1,"types":[],"unit":null},{"id":"wt-57","side":"suffix","tpl":{"cn":"地图首领提供的经验值提高 (40—80)%","tw":"增加(40—80)%地圖頭目賦予的經驗","en":"Map Bosses grant (40—80)% increased Experience"},"rng":[40,80],"ph":1,"tiers":1,"types":[],"unit":null},{"id":"wt-58","side":"suffix","tpl":{"cn":"地图拥有 (1—2) 个额外的随机词缀","tw":"地圖有(1—2)個額外變動詞綴","en":"Map has (1—2) additional random Modifiers"},"rng":[1,2],"ph":1,"tiers":1,"types":[],"unit":null},{"id":"wt-59","side":"suffix","tpl":{"cn":"地图有 (20—40)% 的几率额外包含四个深渊","tw":"地圖有(20—40)%機率包含4道額外深淵","en":"Map has (20—40)% chance to contain four additional Abysses"},"rng":[20,40],"ph":1,"tiers":1,"types":["abyss"],"unit":null},{"id":"wt-60","side":"suffix","tpl":{"cn":"地图有阿兹莫里之灵的几率提高 (70—100)%","tw":"增加(70—100)%地圖內有含有阿茲莫里魂靈的機率","en":"Map has (70—100)% increased chance to contain Azmeri Spirits"},"rng":[70,100],"ph":1,"tiers":1,"types":["overseer"],"unit":null},{"id":"wt-61","side":"suffix","tpl":{"cn":"地图有盗贼流放者的几率提高 (70—100)%","tw":"增加(70—100)%地圖內含有盜賊流亡者的機率","en":"Map has (70—100)% increased chance to contain Rogue Exiles"},"rng":[70,100],"ph":1,"tiers":1,"types":["overseer"],"unit":null},{"id":"wt-62","side":"suffix","tpl":{"cn":"地图中虫巢之血的掉落数量提高 (30—60)%","tw":"增加(30—60)%地圖內找到的巢裔之血數量","en":"% increased Quantity of Hiveblood found in Map"},"rng":[30,60],"ph":1,"tiers":1,"types":["breach"],"unit":null},{"id":"wt-63","side":"suffix","tpl":{"cn":"地图中的不稳定裂隙包含薛斯的元帅弗伦的几率提高 (20—50)%","tw":"增加(20—50)%地圖內的不穩定裂痕含有烈許的統領．弗倫的機率","en":"Unstable Breaches in Map have (20—50)% increased chance to contain Vruun, Marshal of Xesht"},"rng":[20,50],"ph":1,"tiers":1,"types":["breach"],"unit":null},{"id":"wt-64","side":"suffix","tpl":{"cn":"地图中的不稳定裂隙在稳定时会生成 (1—2) 个额外的稀有怪物","tw":"地圖內的不穩定裂痕會在穩定後生成(1—2)名額外稀有怪物","en":"Unstable Breaches in Map spawn (1—2) additional Rare Monsters when Stabilised"},"rng":[1,2],"ph":1,"tiers":1,"types":["breach"],"unit":null},{"id":"wt-65","side":"suffix","tpl":{"cn":"地图中的惊悸迷雾生成的破溃之镜碎片数量提高 (12—26)%","tw":"地圖中的譫妄迷霧增加(12—26)%裂鏡碎片的生成量","en":"Delirium Fog in Map spawns (12—26)% increased Mirror Shards"},"rng":[12,26],"ph":1,"tiers":1,"types":["delirium"],"unit":null},{"id":"wt-66","side":"suffix","tpl":{"cn":"地图中的惊悸迷雾使玩家的亢奋度提高 (15—30)%","tw":"地圖中的譫妄會增加(15—30)%玩家的譫妄程度","en":"Delirium Fog in Map applies (15—30)% increased Deliriousness to Players"},"rng":[15,30],"ph":1,"tiers":1,"types":["delirium"],"unit":null},{"id":"wt-67","side":"suffix","tpl":{"cn":"地图中的深渊掉落渎灵通货的几率提高 (20—30)%","tw":"增加(20—30)%來自地圖內深淵的褻瀆通貨掉落機率","en":"% increased chance for Desecrated Currency from Abysses in Map"},"rng":[20,30],"ph":1,"tiers":1,"types":["abyss"],"unit":null},{"id":"wt-68","side":"suffix","tpl":{"cn":"地图中的深渊额外生成 (2—3) 个稀有怪物","tw":"地圖內的深淵生成(2—3)隻額外稀有怪物","en":"(2—3) additional Rare Monsters are spawned from Abysses in Map"},"rng":[2,3],"ph":1,"tiers":1,"types":["abyss"],"unit":null},{"id":"wt-69","side":"suffix","tpl":{"cn":"地图中的深渊怪物带有深渊词缀的几率提高 (20—30)%","tw":"地圖內的深淵怪物增加(20—30)%擁有深淵詞綴的機率","en":"% increased chance for Abyssal monsters in Map to have Abyssal Modifiers"},"rng":[20,30],"ph":1,"tiers":1,"types":["abyss"],"unit":null},{"id":"wt-70","side":"suffix","tpl":{"cn":"地图中的深渊巨坑必定有奖励","tw":"地圖內的深淵坑洞有兩倍機率含有獎勵","en":"Abyss Pits in Map are twice as likely to have Rewards"},"rng":null,"ph":0,"tiers":1,"types":["abyss"],"unit":null},{"id":"wt-71","side":"suffix","tpl":{"cn":"地图中的深渊生成的怪物数量提高 (20—30)%","tw":"增加(20—30)%地圖內的深淵生成的怪物數量","en":"Abysses in Map spawn (20—30)% increased Monsters"},"rng":[20,30],"ph":1,"tiers":1,"types":["abyss"],"unit":null},{"id":"wt-72","side":"suffix","tpl":{"cn":"地图中的深渊通往绝望深渊的几率提高 (10—20)%","tw":"地圖內的深淵增加有(10—20)%機率前往無盡深淵","en":"Abysses in Map have (10—20)% increased chance to lead to an Abyssal Depths"},"rng":[10,20],"ph":1,"tiers":1,"types":["abyss"],"unit":null},{"id":"wt-73","side":"suffix","tpl":{"cn":"地图中的瓦尔灯塔宝箱为稀有的几率提高 (30—60)%","tw":"增加(30—60)%地圖內瓦爾烽塔的寶箱為稀有的機率","en":"% increased chance Vaal Beacon Chests are Rare in Map"},"rng":[30,60],"ph":1,"tiers":1,"types":["temple"],"unit":null},{"id":"wt-74","side":"suffix","tpl":{"cn":"地图中的瓦尔灯塔附近出现 1 个额外怪物群落","tw":"地圖內的瓦爾烽塔周遭擁有額外1群怪物","en":"1 extra packs of Monsters around Vaal Beacons in Map"},"rng":null,"ph":1,"tiers":1,"types":["temple"],"unit":null},{"id":"wt-75","side":"suffix","tpl":{"cn":"地图中的瓦尔灯塔附近的怪物群落规模提高 (10—30)%","tw":"增加(10—30)%地圖內瓦爾烽塔周遭的怪物群大小","en":"% increased Pack Size for Monsters around Vaal Beacons in Map"},"rng":[10,30],"ph":1,"tiers":1,"types":["temple"],"unit":null},{"id":"wt-76","side":"suffix","tpl":{"cn":"地图中的瓦尔灯塔附近有 (30—60)% 的几率出现一个额外怪物群落","tw":"有(30—60)%機率擁有一群額外怪物在地圖內的瓦爾烽塔周遭","en":"% chance for an extra packs of Monsters around Vaal Beacons in Map"},"rng":[30,60],"ph":1,"tiers":1,"types":["temple"],"unit":null},{"id":"wt-77","side":"suffix","tpl":{"cn":"地图中的瓦尔灯塔召唤额外怪物的几率提高 (25—50)%","tw":"增加(25—50)%地圖內的瓦爾烽塔召喚額外怪物的機率","en":"% increased chance Vaal Beacons summon additional Monsters in Map"},"rng":[25,50],"ph":1,"tiers":1,"types":["temple"],"unit":null},{"id":"wt-78","side":"suffix","tpl":{"cn":"地图中掉落的孕育赠礼有 (10—30)% 的几率高一级","tw":"地圖內有(10—30)%機率掉落高一等級的胎贈","en":"Wombgifts have (10—30)% chance to drop one Level higher in Map"},"rng":[10,30],"ph":1,"tiers":1,"types":["breach"],"unit":null},{"id":"wt-79","side":"suffix","tpl":{"cn":"地图中稀有裂隙怪物的效能提高 (5—20)%","tw":"增加(5—20)%地圖內稀有裂痕怪物的效用","en":"% increased Effectiveness of Rare Breach Monsters in Map"},"rng":[5,20],"ph":1,"tiers":1,"types":["breach"],"unit":null},{"id":"wt-80","side":"suffix","tpl":{"cn":"地图中孕育赠礼的掉落数量提高 (30—60)%","tw":"增加(30—60)%地圖內找到的胎贈數量","en":"% increased Quantity of Wombgifts found in Map"},"rng":[30,60],"ph":1,"tiers":1,"types":["breach"],"unit":null},{"id":"wt-81","side":"suffix","tpl":{"cn":"击败地图内的稀有怪物使惊悸迷雾之镜的倒计时暂停 (3—5) 秒","tw":"地圖內的譫妄迷霧在擊殺稀有怪物時會暫停(3—5)秒","en":"Slaying Rare Monsters in Map pauses the Delirium Mirror Timer for (3—5) seconds"},"rng":[3,5],"ph":1,"tiers":1,"types":["delirium"],"unit":null},{"id":"wt-82","side":"suffix","tpl":{"cn":"每关闭一个巨坑，地图中的深渊怪物的难度与奖励都会提高","tw":"地圖內的深淵怪物根據每1關閉的坑洞增加難度和獎勵","en":"Abyssal Monsters in Map have increased Difficulty and Reward for each closed Pit"},"rng":null,"ph":0,"tiers":1,"types":["abyss"],"unit":null},{"id":"wt-83","side":"suffix","tpl":{"cn":"每关闭一个巨坑，深渊怪物的效能提高 (8—12)%","tw":"每有一個已關閉的坑洞，增加(8—12)%深淵怪物效用","en":"Abyssal Monsters have (8—12)% increased Effectiveness for each closed Pit"},"rng":[8,12],"ph":1,"tiers":1,"types":["abyss"],"unit":null},{"id":"wt-84","side":"suffix","tpl":{"cn":"维金残片生成的怪物掉落的维金数量提高 (15—25)%","tw":"增加(15—25)%維里西姆遺物怪物掉落的維里西姆","en":"Monsters from Verisium Remnants drop (15—25)% increased Verisium"},"rng":[15,25],"ph":1,"tiers":1,"types":["expedition"],"unit":null},{"id":"wt-85","side":"suffix","tpl":{"cn":"有 (10—25)% 的几率为地图增加一个瓦尔灯塔传奇怪物","tw":"有(10—25)%機率為地圖新增一名瓦爾烽塔傳奇怪物","en":"% chance to add a Vaal Beacon Unique Monster to the Map"},"rng":[10,25],"ph":1,"tiers":1,"types":["temple"],"unit":null},{"id":"wt-86","side":"suffix","tpl":{"cn":"有 (5—10)% 的几率从地图中的瓦尔灯塔获得一个额外的水晶","tw":"有(5—10)%機率從地圖內的白瓦爾烽塔獲得額外一個額外水晶","en":"% chance to gain an additional Crystal from Vaal Beacons in Map"},"rng":[5,10],"ph":1,"tiers":1,"types":["temple"],"unit":null},{"id":"wt-117","side":"suffix","tpl":{"cn":"地图中的裂隙巢穴拥有 (2—5) 个额外的裂隙虫群怪物波次","tw":"地圖內的裂痕巢穴擁有額外(2—5)波巢裔怪物","en":"Breach Hives in Map have (2—5) additional waves of Hiveborn Monsters"},"rng":[2,5],"ph":1,"tiers":1,"types":["breach"],"unit":null},{"id":"wt-118","side":"suffix","tpl":{"cn":"地图中的不稳定裂隙在稳定时会生成 (2—5) 个额外的稀有怪物","tw":"地圖內的不穩定裂痕會在穩定後生成(2—5)名額外稀有怪物","en":"Unstable Breaches in Map spawn (2—5) additional Rare Monsters when Stabilised"},"rng":[2,5],"ph":1,"tiers":1,"types":["breach"],"unit":null},{"id":"wt-119","side":"suffix","tpl":{"cn":"你地图中的惊悸迷雾永不消散","tw":"你地圖內的譫妄迷霧永不消散","en":"Delirium Fog in your Maps never dissipates"},"rng":null,"ph":0,"tiers":1,"types":["delirium"],"unit":null},{"id":"wt-120","side":"suffix","tpl":{"cn":"地图中的惊悸迷雾使玩家的亢奋度降低 (-10—10)%","tw":"地圖中的譫妄會增加(-10—10)%玩家的譫妄程度","en":"Delirium Fog in Map applies (-10—10)% increased Deliriousness to Players"},"rng":[-10,10],"ph":1,"tiers":1,"types":["delirium"],"unit":null},{"id":"wt-121","side":"suffix","tpl":{"cn":"你地图中的驱灵祭坛可以重置恩典的次数变为两倍","tw":"在你地圖內祭祀神壇的重骰恩賜之物次數變為雙倍","en":"Rerolling Favours at Ritual Altars in your Maps costs no Tribute"},"rng":null,"ph":0,"tiers":1,"types":["ritual"],"unit":null},{"id":"wt-122","side":"suffix","tpl":{"cn":"地图额外包含 (14—18) 个深渊","tw":"地圖內含有額外(14—18)道深淵","en":"Map contains (14—18) additional Abysses"},"rng":[14,18],"ph":1,"tiers":1,"types":["abyss"],"unit":null}]};
+</script>
+<script>
+window.POE2_I18N = {
+  meta: { langs: [{ id: 'cn' }, { id: 'tw' }, { id: 'en' }] },
+  t: {
+    brand: { cn: 'PoE 2 正则工具', tw: 'PoE 2 正則工具', en: 'PoE 2 Regex Tool' },
+    brandSub: { cn: '流放之路 2 · 词缀正则生成器', tw: '流放之路 2 · 詞綴正則產生器', en: 'Path of Exile 2 · Affix Regex Builder' },
+    tabWaystone: { cn: '引路石', tw: '換界石', en: 'Waystones' },
+    tabTablet: { cn: '石板', tw: '碑牌', en: 'Tablets' },
+    language: { cn: '输出语言', tw: '輸出語言', en: 'Output language' },
+    tiersMerged: { cn: '已合并该词缀的多个阶级，数值区间为全部阶级的并集', tw: '已合併該詞綴的多個階級，數值區間為全部階級的聯集', en: 'Multiple tiers merged; range spans all of them' },
+    noteLoose: { cn: '已按数值门槛精简为任意数字', tw: '已依數值門檻精簡為任意數字', en: 'Numbers relaxed to match any value' },
+    noteShort: { cn: '已压缩为短形式以适配长度上限', tw: '已壓縮為短形式以符合長度上限', en: 'Compressed to short form to fit the length limit' },
+    noteMini: { cn: '已精简为关键词', tw: '已精簡為關鍵詞', en: 'Reduced to keyphrases' },
+    noteOver: { cn: '超出 250 字符上限，请减少条件', tw: '超出 250 字元上限，請減少條件', en: 'Over the 250-character limit — remove some conditions' },
+    noteUnready: { cn: '未就绪', tw: '未就緒', en: 'Unresolved' },
+    searchPlaceholder: { cn: '例如：点燃、抗性、生命', tw: '例如：點燃、抗性、生命', en: 'e.g. ignite, resistance, life' },
+    prefix: { cn: '前缀', tw: '前綴', en: 'Prefix' },
+    suffix: { cn: '后缀', tw: '後綴', en: 'Suffix' },
+    matchAll: { cn: '满足全部', tw: '滿足全部', en: 'Match all' },
+    matchAny: { cn: '满足任一', tw: '滿足任一', en: 'Match any' },
+    clearSelected: { cn: '清空选中词缀', tw: '清空選中詞綴', en: 'Clear selected' },
+    clearAll: { cn: '清空当前条件', tw: '清空目前條件', en: 'Clear all' },
+    copyRegex: { cn: '复制正则', tw: '複製正則', en: 'Copy regex' },
+    copied: { cn: '已复制到剪贴板', tw: '已複製到剪貼簿', en: 'Copied to clipboard' },
+    copyFailed: { cn: '复制失败，请手动选择文本', tw: '複製失敗，請手動選取文字', en: 'Copy failed — select the text manually' },
+    copyDisabled: { cn: '存在未就绪条件，暂不可复制', tw: '存在未就緒條件，暫不可複製', en: 'Unresolved conditions — copy disabled' },
+    affixFilter: { cn: '词缀筛选', tw: '詞綴篩選', en: 'Affix filters' },
+    selectedConditions: { cn: '已选条件', tw: '已選條件', en: 'Selected conditions' },
+    tradePreview: { cn: '交易站搜索框', tw: '交易站搜尋框', en: 'Trade search box' },
+    noConditions: { cn: '还没有筛选条件。', tw: '尚未設定篩選條件。', en: 'No conditions selected yet.' },
+    resultCount: { cn: '个词缀', tw: '個詞綴', en: 'affixes' },
+    saved: { cn: '✓ 已自动保存设置', tw: '✓ 已自動儲存設定', en: '✓ Settings saved locally' },
+    saveBlocked: { cn: '浏览器未允许保存；本次操作仍有效', tw: '瀏覽器未允許儲存；本次操作仍有效', en: 'Local storage unavailable; this session still works' },
+    include: { cn: '包含', tw: '包含', en: 'Include' },
+    exclude: { cn: '排除', tw: '排除', en: 'Exclude' },
+    atLeast: { cn: '至少', tw: '至少', en: 'At least' },
+    atMost: { cn: '至多', tw: '至多', en: 'At most' },
+    unlimited: { cn: '不限', tw: '不限', en: 'Any' },
+    referenceRange: { cn: '参考范围', tw: '參考範圍', en: 'Tier range' },
+    selectTypeFirst: { cn: '请先选择石板类型', tw: '請先選擇碑牌類型', en: 'Choose a tablet type first' },
+    tabletType: { cn: '石板类型', tw: '碑牌類型', en: 'Tablet type' },
+    rarity: { cn: '稀有度', tw: '稀有度', en: 'Rarity' },
+    rarityNormal: { cn: '普通', tw: '普通', en: 'Normal' },
+    rarityMagic: { cn: '魔法', tw: '魔法', en: 'Magic' },
+    rarityRare: { cn: '稀有', tw: '稀有', en: 'Rare' },
+    rarityUnique: { cn: '传奇', tw: '傳奇', en: 'Unique' },
+    revivesLabel: { cn: '复活次数', tw: '可用的復活數', en: 'Revives Available' },
+    corrupted: { cn: '腐化状态', tw: '腐化狀態', en: 'Corrupted' },
+    corruptedYes: { cn: '已腐化', tw: '已汙染', en: 'Corrupted' },
+    corruptedNo: { cn: '未腐化', tw: '未汙染', en: 'Not corrupted' },
+    any: { cn: '不限', tw: '不限', en: 'Any' },
+    tierHeading: { cn: '引路石阶级', tw: '換界石階級', en: 'Waystone tier' },
+    tierHint: { cn: '筛选引路石的阶级范围（T1–T16）。T1–T5 为普通，T6–T10 为魔法，T11–T16 为稀有。', tw: '篩選換界石的階級範圍（T1–T16）。', en: 'Filter by waystone tier (T1–T16).' },
+    tierMin: { cn: '最低阶级', tw: '最低階級', en: 'Min tier' },
+    tierMax: { cn: '最高阶级', tw: '最高階級', en: 'Max tier' },
+    summaryHeading: { cn: '引路石效果筛选', tw: '換界石效果篩選', en: 'Waystone effect filters' },
+    summaryHint: { cn: '以下数值对应引路石上显示的各项效果与属性。填写最低值后，将生成匹配该数值的条件。', tw: '以下數值對應換界石上顯示的各項效果與屬性。填寫最低值後，將產生符合該數值的條件。', en: 'These values match the effects and properties shown on the waystone itself. Enter a minimum to generate a matching condition.' },
+    summaryClear: { cn: '清除', tw: '清除', en: 'Clear' },
+    smEff: { cn: '怪物效能', tw: '怪物效能', en: 'Monster Effectiveness' },
+    smItemRarity: { cn: '物品稀有度', tw: '物品稀有度', en: 'Item Rarity' },
+    smMonsterRarity: { cn: '怪物稀有度', tw: '怪物稀有度', en: 'Monster Rarity' },
+    smPackSize: { cn: '怪物群规模', tw: '怪群大小', en: 'Pack Size' },
+    smWaystone: { cn: '引路石掉落几率', tw: '換界石掉落機率', en: 'WayStone Drop Chance' },
+    hotHeading: { cn: '热门词缀', tw: '熱門詞綴', en: 'Hot affixes' },
+    favHeading: { cn: '最爱', tw: '最愛', en: 'Favorites' },
+    favPlaceholder: { cn: '给这组条件起个名字', tw: '給這組條件起個名字', en: 'Name this preset' },
+    favSave: { cn: '保存', tw: '儲存', en: 'Save' },
+    favEmpty: { cn: '还没有保存的偏好。配置好条件后点「保存」。', tw: '尚未儲存偏好。設定好條件後點「儲存」。', en: 'No saved presets yet.' },
+    favDelete: { cn: '删除', tw: '刪除', en: 'Delete' },
+    favApplied: { cn: '已应用偏好：', tw: '已套用偏好：', en: 'Applied preset: ' },
+    favNameRequired: { cn: '请先填写名称', tw: '請先填寫名稱', en: 'Enter a name first' },
+    favSaved: { cn: '已保存到最爱', tw: '已儲存至最愛', en: 'Saved to favorites' },
+    favCountUnit: { cn: '条条件', tw: '條條件', en: 'conditions' },
+    hvHeading: { cn: '高价值石板词缀', tw: '高價值碑牌詞綴', en: 'High-value tablet affixes' },
+    hvHint: { cn: '按价格筛选高价值碑牌组合，每条给出独立正则。价格参考《流放2 备忘录》国际服 9/19 报价。', tw: '依價格篩選高價值碑牌組合，每條給出獨立正則。價格參考《流放2 備忘錄》國際服 9/19 報價。', en: 'Filter high-value tablet combos by price; each row gives its own regex. Prices reference the "PoE 2 Memo" international listing of 9/19.' },
+    hvHintSource: { cn: '数据来源于', tw: '資料來源於', en: 'Data from' },
+    hvPrice: { cn: '最低价格', tw: '最低價格', en: 'Min price' },
+    hvEmpty: { cn: '没有符合条件的高价值词缀。', tw: '沒有符合條件的高價值詞綴。', en: 'No matching high-value affixes.' },
+    hvTypeAny: { cn: '全部类型', tw: '全部類型', en: 'All types' },
+    hvCopy: { cn: '复制', tw: '複製', en: 'Copy' },
+    hvTotal: { cn: '个结果', tw: '個結果', en: 'results' },
+    dataNote: { cn: '数据来源：poe2db.tw（离线内置）。', tw: '資料來源：poe2db.tw（離線內建）。', en: 'Data source: poe2db.tw (bundled offline).' },
+    footerNote: { cn: '所有设置仅保存在当前浏览器', tw: '所有設定僅儲存在目前瀏覽器', en: 'All settings stored in this browser only' },
+    author: { cn: '作者：LMemory氿忆', tw: '作者：LMemory氿忆', en: 'By LMemory氿忆' },
+    footerSourceLabel: { cn: '数据来源于', tw: '資料來源於', en: 'Data from' },
+    footerSourceJoin: { cn: '、', tw: '、', en: ', ' },
+    footerSourceColon: { cn: '：', tw: '：', en: ': ' },
+    footerVersion: { cn: 'Version 26.09.24', tw: 'Version 26.09.24', en: 'Version 26.09.24' },
+    freeHeading: { cn: '本工具完全免费', tw: '本工具完全免費', en: 'This tool is completely free' },
+    freeItems: {
+      cn: [
+        '本工具由作者免费公开提供，所有功能均可直接使用，无需付费、无需购买授权。',
+        '作者未授权任何个人或组织以收费方式销售本工具、源码或相关文件。',
+        '如果您是通过付费方式获得本工具或相关文件，请注意：该收费行为与作者无关，作者未收到您的款项，也无法为您办理退款。',
+        '请直接联系向您收费的商家/平台协商退款；如遇无法联系或涉嫌欺诈，建议通过支付平台投诉、向消费者协会或相关监管部门反映，并保留付款凭证。',
+        '本声明仅为说明免费性质，不构成对任何第三方行为的担保或承诺。'
+      ],
+      tw: [
+        '本工具由作者免費公開提供，所有功能均可直接使用，無需付費、無需購買授權。',
+        '作者未授權任何個人或組織以收費方式銷售本工具、原始碼或相關檔案。',
+        '如果您是透過付費方式獲得本工具或相關檔案，請注意：該收費行為與作者無關，作者未收到您的款項，也無法為您辦理退款。',
+        '請直接聯繫向您收費的商家／平台協商退款；如遇無法聯繫或涉嫌詐欺，建議透過支付平台投訴、向消費者保護機構或相關主管機關反映，並保留付款憑證。',
+        '本聲明僅為說明免費性質，不構成對任何第三方行為的擔保或承諾。'
+      ],
+      en: [
+        'This tool is published free of charge by the author. Every feature is available directly, with no payment and no licence purchase required.',
+        'The author has not authorised any individual or organisation to sell this tool, its source code or related files for a fee.',
+        'If you paid to obtain this tool or related files, please note: that charge has nothing to do with the author. The author did not receive your payment and cannot issue you a refund.',
+        'Please contact the seller or platform that charged you to request a refund. If they cannot be reached or you suspect fraud, consider filing a complaint through your payment provider, a consumer protection body or the relevant authority, and keep your payment receipts.',
+        'This notice only states that the tool is free; it is not a guarantee or undertaking regarding any third party\u2019s conduct.'
+      ]
+    },
+    sponsorHeading: { cn: '自愿赞助', tw: '自願贊助', en: 'Voluntary support' },
+    sponsorPre: {
+      cn: '如果您觉得好用，可以通过 Bilibili 联系 ',
+      tw: '如果您覺得好用，可以透過 Bilibili 聯繫 ',
+      en: 'If you find it useful, you can reach '
+    },
+    sponsorName: { cn: 'LMemory氿忆', tw: 'LMemory氿忆', en: 'LMemory氿忆' },
+    sponsorPost: {
+      cn: ' 自愿赞助。赞助完全自愿，不构成购买或付费服务，也不会获得额外功能、服务、授权或优先支持，不影响您正常使用本工具。作者未授权任何第三方收费销售本工具；如您是付费获得，该收费与作者无关，作者无法办理退款，请联系收款方处理。感谢支持。',
+      tw: ' 自願贊助。贊助完全自願，不構成購買或付費服務，也不會獲得額外功能、服務、授權或優先支援，不影響您正常使用本工具。作者未授權任何第三方收費銷售本工具；如您是付費獲得，該收費與作者無關，作者無法辦理退款，請聯繫收款方處理。感謝支持。',
+      en: ' on Bilibili to make a voluntary donation. Donating is entirely optional: it is not a purchase or a paid service, and it grants no extra features, services, licence or priority support, and it does not affect your normal use of this tool. The author has not authorised any third party to sell this tool for a fee; if you paid for it, that charge has nothing to do with the author, who cannot issue a refund \u2014 please contact the recipient of your payment. Thank you for your support.'
+    },
+    selfTestFail: { cn: '自测失败', tw: '自測失敗', en: 'Self-test failed' }
+  },
+  tabletTypes: [
+    { id: 'irradiated', cn: '辐照', tw: '輻照', en: 'Irradiated' },
+    { id: 'ritual', cn: '仪式', tw: '祭祀', en: 'Ritual' },
+    { id: 'delirium', cn: '迷雾', tw: '譫妄', en: 'Delirium' },
+    { id: 'breach', cn: '裂隙', tw: '裂痕', en: 'Breach' },
+    { id: 'abyss', cn: '深渊', tw: '深淵', en: 'Abyss' },
+    { id: 'temple', cn: '神庙', tw: '神廟', en: 'Temple' },
+    { id: 'overseer', cn: '霸主', tw: '總督', en: 'Overseer' },
+    { id: 'expedition', cn: '探险', tw: '探險', en: 'Expedition' }
+  ],
+  anchors: {
+    rarityLine: { cn: '稀有度', tw: '稀有度', en: 'Rarity' },
+    normal: { cn: '普通', tw: '中', en: 'Normal' },
+    magic: { cn: '魔法', tw: '魔', en: 'Magic' },
+    rare: { cn: '稀有', tw: '稀', en: 'Rare' },
+    unique: { cn: '传奇', tw: '傳奇', en: 'Unique' },
+    corrupted: { cn: '被腐化', tw: '已汙染', en: 'Corrupted' }
+  }
+};
+</script>
+<script>
+(function (root, factory) {
+  var api = factory();
+  if (typeof module !== 'undefined' && module.exports) module.exports = api;
+  root.POE2_REGEX = api;
+})(typeof window !== 'undefined' ? window : globalThis, function () {
+  'use strict';
+  var VERSION = '1.3.0';
+  var BUDGET = 250;
+  var BUDGET_SAFE = 248;
+  function clamp(n) { return Math.max(0, Math.min(999, trunc(Number(n) || 0))); }
+  function trunc(n) { return n < 0 ? Math.ceil(n) : Math.floor(n); }
+  function trim(s) { return String(s == null ? '' : s).replace(/^[\s\u00a0\u3000]+|[\s\u00a0\u3000]+$/g, ''); }
+  var META = /[.*+?^${}()|[\]\\]/g;
+  function esc(text) { return String(text == null ? '' : text).replace(META, '\\$&'); }
+  
+  var FIELD_SEP = '\\s*[:：]\\s*\\+?';
+  var LOOSE_SEP = '\\s*[:：]?\\s*\\+?';
+  function rangeSameWidth(loStr, hiStr) {
+    var w = loStr.length;
+    if (loStr === strRepeat('0', w) && hiStr === strRepeat('9', w)) return strRepeat('[0-9]', w);
+    if (w === 1) return loStr === hiStr ? loStr : '[' + loStr + '-' + hiStr + ']';
+    var a = loStr.charAt(0), b = hiStr.charAt(0);
+    if (loStr.slice(1) === strRepeat('0', w - 1) && hiStr.slice(1) === strRepeat('9', w - 1)) {
+      return (a === b ? a : '[' + a + '-' + b + ']') + strRepeat('[0-9]', w - 1);
+    }
+    if (a === b) return a + rangeSameWidth(loStr.slice(1), hiStr.slice(1));
+    var parts = [];
+    parts.push(a + rangeSameWidth(loStr.slice(1), strRepeat('9', w - 1)));
+    if (+b > +a + 1) parts.push(charClass(+a + 1, +b - 1) + strRepeat('[0-9]', w - 1));
+    parts.push(b + rangeSameWidth(strRepeat('0', w - 1), hiStr.slice(1)));
+    return parts.length === 1 ? parts[0] : '(' + parts.join('|') + ')';
+  }
+  function charClass(lo, hi) { return lo === hi ? String(lo) : '[' + lo + '-' + hi + ']'; }
+  function strRepeat(s, n) { var o = ''; for (var i = 0; i < n; i++) o += s; return o; }
+  function numberInRange(min, max) {
+    min = clamp(min); max = clamp(max);
+    if (min > max) return null;
+    if (min === max) return String(min);
+    var parts = [], minW = String(min).length, maxW = String(max).length;
+    for (var w = minW; w <= maxW; w++) {
+      var lo = w === minW ? min : Math.pow(10, w - 1);
+      var hi = w === maxW ? max : Math.pow(10, w) - 1;
+      parts.push(rangeSameWidth(String(lo), String(hi)));
+    }
+    return parts.length === 1 ? parts[0] : '(' + parts.join('|') + ')';
+  }
+  var PH = /\(\s*([+\-]?\d{1,3})\s*[—–-]\s*([+\-]?\d{1,3})\s*\)%?|(?:[#X~])\s*%?/g;
+  function isSpaceChar(code) { return code === 32 || code === 9 || code === 10 || code === 13 || code === 12 || code === 11 || code === 160 || code === 0x3000; }
+  function litEscape(s, spaceToken) {
+    s = String(s); var out = []; var buf = '';
+    for (var i = 0; i < s.length; i++) {
+      var ch = s.charAt(i);
+      if (isSpaceChar(s.charCodeAt(i))) {
+        if (buf) { out.push(esc(buf)); buf = ''; }
+        if (out.length === 0 || out[out.length - 1] !== spaceToken) out.push(spaceToken);
+      } else buf += ch;
+    }
+    if (buf) out.push(esc(buf));
+    return out.join('');
+  }
+  var SP = '.*';
+  function stripNumbers(text) {
+    var s = String(text == null ? '' : text); var out = []; var last = 0, m;
+    PH.lastIndex = 0;
+    while ((m = PH.exec(s)) !== null) {
+      out.push(litEscape(s.slice(last, m.index), SP)); out.push(null);
+      last = m.index + m[0].length;
+    }
+    out.push(litEscape(s.slice(last), SP));
+    return out;
+  }
+  function presence(text, minLen) {
+    if (!text) return null;
+    var limit = (typeof minLen === 'number' && minLen > 0) ? minLen : 4;
+    var chunks = stripNumbers(text); var pieces = [];
+    for (var i = 0; i < chunks.length; i++) {
+      var c = chunks[i];
+      if (c === null) { if (pieces.length && pieces[pieces.length - 1] !== '.*') pieces.push('.*'); }
+      else { var lit = c.split(' ').join(SP); if (lit) pieces.push(lit); }
+    }
+    while (pieces.length && pieces[0] === '.*') pieces.shift();
+    while (pieces.length && pieces[pieces.length - 1] === '.*') pieces.pop();
+    var p = normalizeDots(pieces.join(''));
+    if (!p || p.length < limit) return null;
+    return p;
+  }
+  var ESC_DOT = '\u0001ESCDOT\u0001';
+  var WILD = '\u0002';
+  function normalizeDots(p) {
+    if (!p) return p;
+    var out = p.replace(/\\\./g, ESC_DOT);
+    out = out.replace(/\.\*/g, WILD);
+    out = out.replace(/\./g, WILD);
+    out = out.replace(/\u0002+/g, WILD);
+    out = out.split(WILD).join('.*');
+    out = out.replace(/^(?:\.\*)+/, '');
+    out = out.replace(/(?:\.\*)+$/, '');
+    return out.split(ESC_DOT).join('\\.');
+  }
+  function threshold(text, opts) {
+    if (!text) return null;
+    opts = opts || {};
+    var s = String(text); var parts = []; var last = 0, m;
+    PH.lastIndex = 0; var hit = false; var slot = 0;
+    var tightAny = (opts.atLeast !== undefined && opts.atLeast !== null && opts.atLeast !== '') ||
+                   (opts.atMost !== undefined && opts.atMost !== null && opts.atMost !== '');
+    while ((m = PH.exec(s)) !== null) {
+      hit = true;
+      parts.push(litEscape(s.slice(last, m.index), SP));
+      var lo = 0, hi = 999;
+      if (m[1] !== undefined) { lo = +m[1]; hi = +m[2]; }
+      var primary = (slot === 0);
+      if (primary) {
+        if (opts.atLeast !== undefined && opts.atLeast !== null && opts.atLeast !== '') lo = Math.max(lo, clamp(opts.atLeast));
+        if (opts.atMost !== undefined && opts.atMost !== null && opts.atMost !== '') hi = Math.min(hi, clamp(opts.atMost));
+        if (lo > hi) return null;
+      }
+      var tight = primary && tightAny;
+      parts.push(tight ? (numberInRange(lo, hi) || '[0-9]+') : '[0-9]+');
+      parts.push('(?:' + SP + '\\([0-9]+[-–—][0-9]+\\))?');
+      last = m.index + m[0].length; slot++;
+    }
+    if (!hit) return null;
+    parts.push(litEscape(s.slice(last), SP));
+    return normalizeDots(parts.join('')) || null;
+  }
+  function build(opts) {
+    opts = opts || {};
+    var includes = dedupe(compact(opts.includes || []));
+    var excludes = dedupe(compact(opts.excludes || []));
+    var always = dedupe(compact(opts.always || []));
+    var match = opts.match === 'any' ? 'any' : 'all';
+    var allBlocks = always.concat(includes, excludes);
+    if (!allBlocks.length) return { ok: false, reason: 'no-conditions', source: '', blocks: [], length: 0 };
+    for (var i = 0; i < allBlocks.length; i++) {
+      if (!isSafe(allBlocks[i])) return { ok: false, reason: 'invalid-fragment', source: '', blocks: [], length: 0, detail: allBlocks[i] };
+    }
+    var blocks = always.slice();
+    if (includes.length) {
+      if (match === 'all') { for (var j = 0; j < includes.length; j++) blocks.push(includes[j]); }
+      else blocks.push(includes.join('|'));
+    }
+    if (excludes.length) blocks.push('!' + excludes.join('|'));
+    var source = quoteAll(blocks);
+    return { ok: true, reason: 'ok', source: source, blocks: blocks, length: source.length };
+  }
+  function quoteAll(blocks) {
+    var out = [];
+    for (var i = 0; i < blocks.length; i++) out.push('"' + blocks[i] + '"');
+    return out.join(' ');
+  }
+  function isSafe(p) { return typeof p === 'string' && p.length > 0 && p.indexOf('"') === -1 && p.indexOf('\n') === -1 && p.indexOf('\r') === -1; }
+  function compact(list) { var out = []; for (var i = 0; i < list.length; i++) { if (list[i]) out.push(list[i]); } return out; }
+  function dedupe(list) {
+    var seen = {}, out = [];
+    for (var i = 0; i < list.length; i++) { if (seen[list[i]]) continue; seen[list[i]] = 1; out.push(list[i]); }
+    return out;
+  }
+  function fit(levels, budget) {
+    budget = budget || BUDGET;
+    var chosen = null;
+    for (var i = 0; i < levels.length; i++) {
+      var r = build(levels[i]);
+      if (r.ok && r.length <= budget) { chosen = { level: i, source: r.source, length: r.length, blocks: r.blocks }; break; }
+    }
+    if (!chosen) {
+      var best = null;
+      for (var k = 0; k < levels.length; k++) {
+        var rr = build(levels[k]);
+        if (rr.ok && (!best || rr.length < best.length)) best = { level: k, source: rr.source, length: rr.length, blocks: rr.blocks };
+      }
+      if (best) { best.over = true; return best; }
+      return { level: -1, source: '', length: 0, blocks: [], empty: true };
+    }
+    chosen.over = false;
+    return chosen;
+  }
+  function selfTest() {
+    var fails = [];
+    var probes = [[0, 9], [0, 10], [5, 5], [1, 999], [15, 19], [30, 40], [70, 100], [100, 119], [200, 240], [25, 35], [0, 0], [99, 101], [150, 150], [12, 18], [5, 20], [8, 12], [3, 6], [10, 25], [50, 239], [7, 700]];
+    for (var i = 0; i < probes.length; i++) {
+      var lo = probes[i][0], hi = probes[i][1];
+      var frag = numberInRange(lo, hi);
+      if (!frag) { fails.push(lo + '-' + hi + ': null'); continue; }
+      var re;
+      try { re = new RegExp('^(?:' + frag + ')$'); } catch (e) { fails.push(lo + '-' + hi + ': bad'); continue; }
+      for (var v = 0; v <= 999; v++) {
+        if (re.test(String(v)) !== (v >= lo && v <= hi)) { fails.push(lo + '-' + hi + ' v=' + v); break; }
+      }
+    }
+    if (esc('a.b') !== 'a\\.b') fails.push('escape');
+    var b = build({ includes: ['abc', 'def'], excludes: ['xyz'], always: ['aaa'], match: 'all' });
+    if (!b.ok || b.source !== '"aaa" "abc" "def" "!xyz"') fails.push('build-all');
+    var b2 = build({ includes: ['abc', 'def'], match: 'any' });
+    if (!b2.ok || b2.source !== '"abc|def"') fails.push('build-any');
+    return { ok: fails.length === 0, fails: fails };
+  }
+  return { VERSION: VERSION, BUDGET: BUDGET, BUDGET_SAFE: BUDGET_SAFE, esc: esc, fieldSep: FIELD_SEP, looseSep: LOOSE_SEP, numberInRange: numberInRange, presence: presence, threshold: threshold, build: build, fit: fit, selfTest: selfTest };
+});
+</script>
+<script>
+window.POE2_HIGHVALUE = {
+  breach: [
+    { cn: '传奇怪物额外1个词缀', n: '傳奇怪物額外1個詞綴', en: 'Unique Monsters have 1 additional Modifier', p: 120, a: [['wt-14', null]] },
+    { cn: '引路石36+', n: '引路石36+', en: 'Waystone Drop Chance 36+', p: 44, a: [['wt-56', 36]] },
+    { cn: '怪物效能13+', n: '怪物效能13+', en: 'Monster Effectiveness 13+', p: 56, a: [['wt-13', 13]] },
+    { cn: '怪物稀有度18+', n: '怪物稀有度18+', en: 'Monster Rarity 18+', p: 56, a: [['wt-12', 18]] },
+    { cn: '稀有怪物数量32+', n: '稀有怪物數量32+', en: 'Number of Rare Monsters 32+', p: 56, a: [['wt-10', 32]] },
+    { cn: '地图额外1个词缀', n: '地圖額外1個詞綴', en: 'Map has 1 additional Modifier', p: 468, a: [['wt-58', 1]] },
+    { cn: '地图额外2个词缀', n: '地圖額外2個詞綴', en: 'Map has 2 additional Modifiers', p: 936, a: [['wt-58', 2]] },
+    { cn: '地图怪物群规模6+', n: '地圖怪物群規模6+', en: 'Pack Size in Map 6+', p: 40, a: [['wt-5', 6]] },
+    { cn: '地图内获取稀有度提高11+', n: '地圖內獲取稀有度提高11+', en: 'Rarity of Items found in Map 11+', p: 40, a: [['wt-8', 11]] },
+    { cn: '裂隙生成1个额外稀有怪物', n: '裂隙生成1個額外稀有怪物', en: 'Breach spawns 1 additional Rare Monster', p: 56, a: [['wt-64', 1]] },
+    { cn: '裂隙生成2个额外稀有怪物', n: '裂隙生成2個額外稀有怪物', en: 'Breach spawns 2 additional Rare Monsters', p: 224, a: [['wt-64', 2]] },
+    { cn: '虫巢之血54+', n: '蟲巢之血54+', en: 'Hiveblood 54+', p: 728, a: [['wt-62', 54]] },
+    { cn: '裂隙稀有怪物效能18+', n: '裂隙稀有怪物效能18+', en: 'Effectiveness of Rare Breach Monsters 18+', p: 56, a: [['wt-79', 18]] },
+    { cn: '孕育赠礼掉落54+', n: '孕育贈禮掉落54+', en: 'Wombgifts dropped 54+', p: 224, a: [['wt-80', 54]] },
+    { cn: '孕育赠礼升级27+', n: '孕育贈禮升級27+', en: 'Wombgifts one Level higher 27+', p: 40, a: [['wt-78', 27]] },
+    { cn: '包含元帅45+', n: '包含元帥45+', en: 'Contains the Marshal 45+', p: 40, a: [['wt-63', 45]] },
+    { cn: '裂隙中怪物群规模14+', n: '裂隙中怪物群規模14+', en: 'Pack Size for Breaches in Map 14+', p: 45, a: [['wt-26', 14]] },
+    { cn: '额外1阿兹莫里之灵+保险箱', n: '額外1阿茲莫裡之靈+保險箱', en: '1 additional Azmeri Spirit + Strongbox', p: 1404, a: [['wt-6', null], ['wt-19', null]] }
+  ],
+  abyss: [
+    { cn: '传奇怪物额外1个词缀', n: '傳奇怪物額外1個詞綴', en: 'Unique Monsters have 1 additional Modifier', p: 468, a: [['wt-14', null]] },
+    { cn: '引路石36+', n: '引路石36+', en: 'Waystone Drop Chance 36+', p: 468, a: [['wt-56', 36]] },
+    { cn: '怪物效能13+', n: '怪物效能13+', en: 'Monster Effectiveness 13+', p: 468, a: [['wt-13', 13]] },
+    { cn: '怪物稀有度18+', n: '怪物稀有度18+', en: 'Monster Rarity 18+', p: 468, a: [['wt-12', 18]] },
+    { cn: '稀有怪物数量32+', n: '稀有怪物數量32+', en: 'Number of Rare Monsters 32+', p: 468, a: [['wt-10', 32]] },
+    { cn: '地图额外1个词缀', n: '地圖額外1個詞綴', en: 'Map has 1 additional Modifier', p: 1872, a: [['wt-58', 1]] },
+    { cn: '地图额外2个词缀', n: '地圖額外2個詞綴', en: 'Map has 2 additional Modifiers', p: 2808, a: [['wt-58', 2]] },
+    { cn: '地图怪物群规模6+', n: '地圖怪物群規模6+', en: 'Pack Size in Map 6+', p: 468, a: [['wt-5', 6]] },
+    { cn: '地图内获取稀有度提高11+', n: '地圖內獲取稀有度提高11+', en: 'Rarity of Items found in Map 11+', p: 468, a: [['wt-8', 11]] },
+    { cn: '深渊生成怪物数量27+', n: '深淵生成怪物數量27+', en: 'Monsters spawned by Abysses 27+', p: 468, a: [['wt-71', 27]] },
+    { cn: '深渊额外生成2个稀有怪物', n: '深淵額外生成2個稀有怪物', en: 'Abysses spawn 2 additional Rare Monsters', p: 250, a: [['wt-68', 2]] },
+    { cn: '闭坑，效能提高11+', n: '閉坑，效能提高11+', en: 'Per closed Pit, Effectiveness 11+', p: 468, a: [['wt-83', 11]] },
+    { cn: '绝望深渊几率18+', n: '絕望深淵幾率18+', en: 'Chance to lead to an Abyssal Depths 18+', p: 936, a: [['wt-72', 18]] },
+    { cn: '地图包含1个额外深渊', n: '地圖包含1個額外深淵', en: 'Map contains 1 additional Abyss', p: 250, a: [['wt-25', null]] },
+    { cn: '巨坑双倍奖励', n: '巨坑雙倍獎勵', en: 'Abyss Pits twice as likely to have Rewards', p: 240, a: [['wt-70', null]] },
+    { cn: '额外包含4个深渊36+', n: '額外包含4個深淵36+', en: 'Contains 4 additional Abysses 36+', p: 468, a: [['wt-59', 36]] },
+    { cn: '带有深渊词缀27+', n: '帶有深淵詞綴27+', en: 'With Abyssal Modifiers 27+', p: 240, a: [['wt-69', 27]] },
+    { cn: '深渊掉落渎灵通货27+', n: '深淵掉落瀆靈通貨27+', en: 'Desecrated Currency from Abysses 27+', p: 468, a: [['wt-67', 27]] },
+    { cn: '深渊额外1个盗贼', n: '深淵額外1個盜賊', en: 'Abyss: 1 additional Rogue Exile', p: 468, a: [['wt-7', null]] },
+    { cn: '额外1阿兹莫里之灵+保险箱', n: '額外1阿茲莫裡之靈+保險箱', en: '1 additional Azmeri Spirit + Strongbox', p: 3276, a: [['wt-6', null], ['wt-19', null]] }
+  ],
+  delirium: [
+    { cn: '传奇怪物额外1个词缀', n: '傳奇怪物額外1個詞綴', en: 'Unique Monsters have 1 additional Modifier', p: 90, a: [['wt-14', null]] },
+    { cn: '引路石36+', n: '引路石36+', en: 'Waystone Drop Chance 36+', p: 15, a: [['wt-56', 36]] },
+    { cn: '怪物效能13+', n: '怪物效能13+', en: 'Monster Effectiveness 13+', p: 15, a: [['wt-13', 13]] },
+    { cn: '怪物稀有度18+', n: '怪物稀有度18+', en: 'Monster Rarity 18+', p: 14, a: [['wt-12', 18]] },
+    { cn: '稀有怪物数量32+', n: '稀有怪物數量32+', en: 'Number of Rare Monsters 32+', p: 15, a: [['wt-10', 32]] },
+    { cn: '地图额外1个词缀', n: '地圖額外1個詞綴', en: 'Map has 1 additional Modifier', p: 130, a: [['wt-58', 1]] },
+    { cn: '地图额外2个词缀', n: '地圖額外2個詞綴', en: 'Map has 2 additional Modifiers', p: 936, a: [['wt-58', 2]] },
+    { cn: '地图怪物群规模6+', n: '地圖怪物群規模6+', en: 'Pack Size in Map 6+', p: 14, a: [['wt-5', 6]] },
+    { cn: '地图内获取稀有度提高11+', n: '地圖內獲取稀有度提高11+', en: 'Rarity of Items found in Map 11+', p: 14, a: [['wt-8', 11]] },
+    { cn: '碎片堆叠数量提高27+', n: '碎片堆疊數量提高27+', en: 'Simulacrum Splinter stack size 27+', p: 100, a: [['wt-30', 27]] },
+    { cn: '消散前额外持续11+', n: '消散前額外持續11+', en: 'Lasts additional seconds before dissipating 11+', p: 14, a: [['wt-28', 11]] },
+    { cn: '消散速度27+', n: '消散速度27+', en: 'Dissipates slower 27+', p: 12, a: [['wt-41', 27]] },
+    { cn: '玩家亢奋27+', n: '玩家亢奮27+', en: 'Deliriousness to Players 27+', p: 19, a: [['wt-66', 27]] },
+    { cn: '迷雾怪物怪物群提高27+', n: '迷霧怪物怪物群提高27+', en: 'Delirium Monsters Pack Size 27+', p: 12, a: [['wt-40', 27]] },
+    { cn: '生成的破溃之镜27+', n: '生成的破潰之鏡27+', en: 'Fracturing Mirrors 27+', p: 60, a: [['wt-27', 27]] },
+    { cn: '暂停4秒+', n: '暫停4秒+', en: 'Pauses for 4 seconds+', p: 12, a: [['wt-81', 4]] },
+    { cn: '传奇首领几率27+', n: '傳奇首領幾率27+', en: 'Unique Boss chance 27+', p: 23, a: [['wt-29', 27]] },
+    { cn: '破溃之镜碎片提高23+', n: '破潰之鏡碎片提高23+', en: 'Mirror Shards 23+', p: 25, a: [['wt-65', 23]] },
+    { cn: '额外1阿兹莫里之灵+保险箱', n: '額外1阿茲莫裡之靈+保險箱', en: '1 additional Azmeri Spirit + Strongbox', p: 1404, a: [['wt-6', null], ['wt-19', null]] }
+  ],
+  ritual: [
+    { cn: '传奇怪物额外1个词缀', n: '傳奇怪物額外1個詞綴', en: 'Unique Monsters have 1 additional Modifier', p: 220, a: [['wt-14', null]] },
+    { cn: '引路石36+', n: '引路石36+', en: 'Waystone Drop Chance 36+', p: 20, a: [['wt-56', 36]] },
+    { cn: '怪物效能13+', n: '怪物效能13+', en: 'Monster Effectiveness 13+', p: 25, a: [['wt-13', 13]] },
+    { cn: '怪物稀有度18+', n: '怪物稀有度18+', en: 'Monster Rarity 18+', p: 20, a: [['wt-12', 18]] },
+    { cn: '稀有怪物数量32+', n: '稀有怪物數量32+', en: 'Number of Rare Monsters 32+', p: 25, a: [['wt-10', 32]] },
+    { cn: '地图额外1个词缀', n: '地圖額外1個詞綴', en: 'Map has 1 additional Modifier', p: 150, a: [['wt-58', 1]] },
+    { cn: '地图额外2个词缀', n: '地圖額外2個詞綴', en: 'Map has 2 additional Modifiers', p: 936, a: [['wt-58', 2]] },
+    { cn: '地图怪物群规模6+', n: '地圖怪物群規模6+', en: 'Pack Size in Map 6+', p: 25, a: [['wt-5', 6]] },
+    { cn: '地图内获取稀有度提高11+', n: '地圖內獲取稀有度提高11+', en: 'Rarity of Items found in Map 11+', p: 25, a: [['wt-8', 11]] },
+    { cn: '贡品提高27+', n: '貢品提高27+', en: 'Tribute 27+', p: 30, a: [['wt-48', 27]] },
+    { cn: '重置恩典27+', n: '重置恩典27+', en: 'Reroll count 27+', p: 30, a: [['wt-50', 27]] },
+    { cn: '延时恩典27+', n: '延時恩典27+', en: 'Deferred Favours cost 27+', p: 30, a: [['wt-49', 27]] },
+    { cn: '恩典重现36+', n: '恩典重現36+', en: 'Favours reappear 36+', p: 25, a: [['wt-43', 36]] },
+    { cn: '额外重置1次', n: '額外重置1次', en: '1 additional reroll', p: 7020, a: [['wt-31', 1]] },
+    { cn: '额外重置2次', n: '額外重置2次', en: '2 additional rerolls', p: 7020, a: [['wt-31', 2]] },
+    { cn: '额外重置3次', n: '額外重置3次', en: '3 additional rerolls', p: 8424, a: [['wt-31', 3]] },
+    { cn: '几率不消耗5%+', n: '幾率不消耗5%+', en: 'Chance to cost no Tribute 5%+', p: 30, a: [['wt-51', 5]] },
+    { cn: '再生几率为魔法63+', n: '再生幾率為魔法63+', en: 'Revived as Magic 63+', p: 30, a: [['wt-44', 63]] },
+    { cn: '再生为稀有36+', n: '再生為稀有36+', en: 'Revived as Rare 36+', p: 30, a: [['wt-32', 36]] },
+    { cn: '恩典为预兆63+', n: '恩典為預兆63+', en: 'Favours are Omens 63+', p: 468, a: [['wt-42', 63]] },
+    { cn: '额外1阿兹莫里之灵+保险箱', n: '額外1阿茲莫裡之靈+保險箱', en: '1 additional Azmeri Spirit + Strongbox', p: 2240, a: [['wt-6', null], ['wt-19', null]] }
+  ],
+  irradiated: [
+    { cn: '传奇怪物额外1个词缀', n: '傳奇怪物額外1個詞綴', en: 'Unique Monsters have 1 additional Modifier', p: 100, a: [['wt-14', null]] },
+    { cn: '引路石36+', n: '引路石36+', en: 'Waystone Drop Chance 36+', p: 40, a: [['wt-56', 36]] },
+    { cn: '怪物效能13+', n: '怪物效能13+', en: 'Monster Effectiveness 13+', p: 85, a: [['wt-13', 13]] },
+    { cn: '怪物稀有度18+', n: '怪物稀有度18+', en: 'Monster Rarity 18+', p: 40, a: [['wt-12', 18]] },
+    { cn: '稀有怪物数量32+', n: '稀有怪物數量32+', en: 'Number of Rare Monsters 32+', p: 45, a: [['wt-10', 32]] },
+    { cn: '地图额外1个词缀', n: '地圖額外1個詞綴', en: 'Map has 1 additional Modifier', p: 1404, a: [['wt-58', 1]] },
+    { cn: '地图额外2个词缀', n: '地圖額外2個詞綴', en: 'Map has 2 additional Modifiers', p: 2808, a: [['wt-58', 2]] },
+    { cn: '地图怪物群规模6+', n: '地圖怪物群規模6+', en: 'Pack Size in Map 6+', p: 50, a: [['wt-5', 6]] },
+    { cn: '地图内获取稀有度提高11+', n: '地圖內獲取稀有度提高11+', en: 'Rarity of Items found in Map 11+', p: 40, a: [['wt-8', 11]] },
+    { cn: '额外1个盗贼', n: '額外1個盜賊', en: '1 additional Rogue Exile', p: 60, a: [['wt-7', null]] },
+    { cn: '额外1阿兹莫里之灵+保险箱', n: '額外1阿茲莫裡之靈+保險箱', en: '1 additional Azmeri Spirit + Strongbox', p: 1400, a: [['wt-6', null], ['wt-19', null]] }
+  ],
+  overseer: [
+    { cn: '传奇怪物额外1个词缀', n: '傳奇怪物額外1個詞綴', en: 'Unique Monsters have 1 additional Modifier', p: 220, a: [['wt-14', null]] },
+    { cn: '引路石36+', n: '引路石36+', en: 'Waystone Drop Chance 36+', p: 80, a: [['wt-56', 36]] },
+    { cn: '怪物效能13+', n: '怪物效能13+', en: 'Monster Effectiveness 13+', p: 50, a: [['wt-13', 13]] },
+    { cn: '怪物稀有度18+', n: '怪物稀有度18+', en: 'Monster Rarity 18+', p: 50, a: [['wt-12', 18]] },
+    { cn: '稀有怪物数量32+', n: '稀有怪物數量32+', en: 'Number of Rare Monsters 32+', p: 70, a: [['wt-10', 32]] },
+    { cn: '地图额外1个词缀', n: '地圖額外1個詞綴', en: 'Map has 1 additional Modifier', p: 200, a: [['wt-58', 1]] },
+    { cn: '地图额外2个词缀', n: '地圖額外2個詞綴', en: 'Map has 2 additional Modifiers', p: 1404, a: [['wt-58', 2]] },
+    { cn: '地图怪物群规模6+', n: '地圖怪物群規模6+', en: 'Pack Size in Map 6+', p: 50, a: [['wt-5', 6]] },
+    { cn: '地图内获取稀有度提高11+', n: '地圖內獲取稀有度提高11+', en: 'Rarity of Items found in Map 11+', p: 50, a: [['wt-8', 11]] },
+    { cn: '地图首领引路石27+', n: '地圖首領引路石27+', en: 'Quantity of Waystones dropped by Map Bosses 27+', p: 90, a: [['wt-56', 27]] },
+    { cn: '首领稀有度54+', n: '首領稀有度54+', en: 'Boss Rarity 54+', p: 70, a: [['wt-55', 54]] },
+    { cn: '地图首领物品数量18+', n: '地圖首領物品數量18+', en: 'Quantity of Items dropped by Map Bosses 18+', p: 80, a: [['wt-54', 18]] },
+    { cn: '地图额外1个阿兹莫里之灵', n: '地圖額外1個阿茲莫裡之靈', en: 'Map contains 1 additional Azmeri Spirit', p: 468, a: [['wt-15', 1]] },
+    { cn: '地图额外2个阿兹莫里之灵', n: '地圖額外2個阿茲莫裡之靈', en: 'Map contains 2 additional Azmeri Spirits', p: 5616, a: [['wt-15', 2]] },
+    { cn: '地图额外3个阿兹莫里之灵', n: '地圖額外3個阿茲莫裡之靈', en: 'Map contains 3 additional Azmeri Spirits', p: 29016, a: [['wt-15', 3]] },
+    { cn: '额外1个保险箱', n: '額外1個保險箱', en: '1 additional Strongbox', p: 150, a: [['wt-19', null]] },
+    { cn: '额外1个盗贼', n: '額外1個盜賊', en: '1 additional Rogue Exile', p: 120, a: [['wt-7', null]] },
+    { cn: '额外1阿兹莫里之灵+保险箱', n: '額外1阿茲莫裡之靈+保險箱', en: '1 additional Azmeri Spirit + Strongbox', p: 7020, a: [['wt-6', null], ['wt-19', null]] }
+  ],
+  temple: [
+    { cn: '传奇怪物额外1个词缀', n: '傳奇怪物額外1個詞綴', en: 'Unique Monsters have 1 additional Modifier', p: 1872, a: [['wt-14', null]] },
+    { cn: '引路石36+', n: '引路石36+', en: 'Waystone Drop Chance 36+', p: 235, a: [['wt-56', 36]] },
+    { cn: '怪物效能13+', n: '怪物效能13+', en: 'Monster Effectiveness 13+', p: 220, a: [['wt-13', 13]] },
+    { cn: '怪物稀有度18+', n: '怪物稀有度18+', en: 'Monster Rarity 18+', p: 220, a: [['wt-12', 18]] },
+    { cn: '稀有怪物数量32+', n: '稀有怪物數量32+', en: 'Number of Rare Monsters 32+', p: 250, a: [['wt-10', 32]] },
+    { cn: '地图额外1个词缀', n: '地圖額外1個詞綴', en: 'Map has 1 additional Modifier', p: 468, a: [['wt-58', 1]] },
+    { cn: '地图额外2个词缀', n: '地圖額外2個詞綴', en: 'Map has 2 additional Modifiers', p: 936, a: [['wt-58', 2]] },
+    { cn: '地图怪物群规模6+', n: '地圖怪物群規模6+', en: 'Pack Size in Map 6+', p: 220, a: [['wt-5', 6]] },
+    { cn: '地图内获取稀有度提高11+', n: '地圖內獲取稀有度提高11+', en: 'Rarity of Items found in Map 11+', p: 220, a: [['wt-8', 11]] },
+    { cn: '灯塔附近怪物群27+', n: '燈塔附近怪物群27+', en: 'Pack Size around Vaal Beacons 27+', p: 220, a: [['wt-75', 27]] },
+    { cn: '灯塔附近额外1个怪物群', n: '燈塔附近額外1個怪物群', en: '1 extra Monster pack around Vaal Beacons', p: 230, a: [['wt-74', null]] },
+    { cn: '灯塔附近54+几率出现额外怪物群', n: '燈塔附近54+幾率出現額外怪物群', en: '54+ chance for an extra Monster pack around Vaal Beacons', p: 230, a: [['wt-76', 54]] },
+    { cn: '灯塔45+几率额外召唤怪物', n: '燈塔45+幾率額外召喚怪物', en: 'Vaal Beacon 45+ chance to summon additional Monsters', p: 230, a: [['wt-77', 45]] },
+    { cn: '额外水晶9%+', n: '額外水晶9%+', en: 'Additional Crystal 9%+', p: 2340, a: [['wt-86', 9]] },
+    { cn: '23%概率增加额外灯塔传奇怪物', n: '23%概率增加額外燈塔傳奇怪物', en: '23% chance for an extra Vaal Beacon Unique Monster', p: 468, a: [['wt-85', 23]] },
+    { cn: '灯塔宝箱54%+', n: '燈塔寶箱54%+', en: 'Vaal Beacon Chests are Rare 54%+', p: 468, a: [['wt-73', 54]] },
+    { cn: '额外传奇怪23%+传奇额外词', n: '額外傳奇怪23%+傳奇額外詞', en: 'Extra Unique Monster 23%+ with an extra Modifier', p: 18720, a: [['wt-85', 23], ['wt-14', null]] },
+    { cn: '额外1阿兹莫里之灵+保险箱', n: '額外1阿茲莫裡之靈+保險箱', en: '1 additional Azmeri Spirit + Strongbox', p: 2520, a: [['wt-6', null], ['wt-19', null]] }
+  ],
+  expedition: [
+    { cn: '传奇怪物额外1个词缀', n: '傳奇怪物額外1個詞綴', en: 'Unique Monsters have 1 additional Modifier', p: 100, a: [['wt-14', null]] },
+    { cn: '引路石36+', n: '引路石36+', en: 'Waystone Drop Chance 36+', p: 5, a: [['wt-56', 36]] },
+    { cn: '怪物效能13+', n: '怪物效能13+', en: 'Monster Effectiveness 13+', p: 5, a: [['wt-13', 13]] },
+    { cn: '怪物稀有度18+', n: '怪物稀有度18+', en: 'Monster Rarity 18+', p: 7, a: [['wt-12', 18]] },
+    { cn: '稀有怪物数量32+', n: '稀有怪物數量32+', en: 'Number of Rare Monsters 32+', p: 10, a: [['wt-10', 32]] },
+    { cn: '地图额外1个词缀', n: '地圖額外1個詞綴', en: 'Map has 1 additional Modifier', p: 1404, a: [['wt-58', 1]] },
+    { cn: '地图额外2个词缀', n: '地圖額外2個詞綴', en: 'Map has 2 additional Modifiers', p: 1872, a: [['wt-58', 2]] },
+    { cn: '地图怪物群规模6+', n: '地圖怪物群規模6+', en: 'Pack Size in Map 6+', p: 5, a: [['wt-5', 6]] },
+    { cn: '地图内获取稀有度提高11+', n: '地圖內獲取稀有度提高11+', en: 'Rarity of Items found in Map 11+', p: 5, a: [['wt-8', 11]] },
+    { cn: '爆炸范围9%', n: '爆炸范圍9%', en: 'Explosive Area of Effect 9%', p: 5, a: [['wt-46', 9]] },
+    { cn: '符文怪物掉落日志23%', n: '符文怪物掉落日誌23%', en: 'Expedition Logbooks from Runic Monsters 23%', p: 10, a: [['wt-39', 23]] },
+    { cn: '符文怪物标记数量23%', n: '符文怪物標記數量23%', en: 'Runic Monster Markers 23%', p: 10, a: [['wt-38', 23]] },
+    { cn: '维金掉落数量23%', n: '維金掉落數量23%', en: 'Verisium dropped 23%', p: 10, a: [['wt-84', 23]] },
+    { cn: '额外1个维金哨兵', n: '額外1個維金哨兵', en: '1 additional Verisium Sentry', p: 5, a: [['wt-37', 1]] },
+    { cn: '额外2个维金哨兵', n: '額外2個維金哨兵', en: '2 additional Verisium Sentries', p: 10, a: [['wt-37', 2]] },
+    { cn: '额外1个冰封首领', n: '額外1個冰封首領', en: '1 additional Ice-encased Boss', p: 8, a: [['wt-36', 1]] },
+    { cn: '额外2个冰封首领', n: '額外2個冰封首領', en: '2 additional Ice-encased Bosses', p: 10, a: [['wt-36', 2]] },
+    { cn: '先祖密藏怪物稀有度23%', n: '先祖密藏怪物稀有度23%', en: 'Rarity of Expedition Monsters 23%', p: 10, a: [['wt-45', 23]] },
+    { cn: '额外1-2个瓦尔遗物', n: '額外1-2個瓦爾遺物', en: '1-2 additional Vaal Relics', p: 5, a: [['wt-35', null]] },
+    { cn: '残片添加额外词缀32+', n: '殘片添加額外詞綴32+', en: 'Remnants add a Runic Modifier 32+', p: 25, a: [['wt-33', 32]] },
+    { cn: '溢出几率额外残片36+', n: '溢出幾率額外殘片36+', en: 'Overflow chance for an extra Remnant 36+', p: 468, a: [['wt-33', 36]] },
+    { cn: '冰封头目+传奇怪物额外词', n: '冰封頭目+傳奇怪物額外詞', en: 'Ice-encased Boss + Unique Monster extra modifier', p: 15444, a: [['wt-36', 1], ['wt-14', null]] },
+    { cn: '额外1阿兹莫里之灵+保险箱', n: '額外1阿茲莫裡之靈+保險箱', en: '1 additional Azmeri Spirit + Strongbox', p: 1400, a: [['wt-6', null], ['wt-19', null]] }
+  ]
+};
+</script>
+<script>
+(function () {
+  'use strict';
+  var D = window.POE2_DATA || { waystone: [], tablet: [] };
+  var R = window.POE2_REGEX;
+  var I = window.POE2_I18N;
+  var HV = window.POE2_HIGHVALUE || {};
+  var $ = function (id) { return document.getElementById(id); };
+
+  var KEY = 'poe2.regex.v7';
+  var TABS = ['waystone', 'tablet'];
+  var RATE = { E: 1, C: 56, D: 468 };
+  var HOT_IDS = ['wt025', 'wt026', 'wt027', 'wt023', 'wt022', 'wt024'];
+
+  
+  function freshPage() {
+    return {
+      prefix: true, suffix: true, search: '', match: 'all',
+      types: [], basic: { revives: '', rarities: [] }, selected: {},
+      tierMin: '', tierMax: '',
+      summary: { eff: '', itemRarity: '', monsterRarity: '', packSize: '', waystone: '' }
+    };
+  }
+  function defaults() {
+    var o = {
+      version: 7, language: 'cn', tab: 'waystone',
+      presets: { waystone: [], tablet: [] },
+      hvPrice: '', hvCurrency: 'E', hvTypes: []
+    };
+    for (var i = 0; i < TABS.length; i++) o[TABS[i]] = freshPage();
+    return o;
+  }
+
+  function restore(raw) {
+    var out = defaults();
+    if (!raw || (raw.version < 1 || raw.version > 7)) return out;
+    if (I.meta.langs.some(function (l) { return l.id === raw.language; })) out.language = raw.language;
+    if (TABS.indexOf(raw.tab) >= 0) out.tab = raw.tab;
+    if (raw.hvCurrency && RATE.hasOwnProperty(raw.hvCurrency)) out.hvCurrency = raw.hvCurrency;
+    if (typeof raw.hvPrice === 'string' || typeof raw.hvPrice === 'number') out.hvPrice = String(raw.hvPrice).slice(0, 8);
+    if (Array.isArray(raw.hvTypes)) {
+      out.hvTypes = raw.hvTypes.filter(function (t) {
+        return I.tabletTypes.some(function (x) { return x.id === t; });
+      }).slice(0, 16);
+    }
+    if (raw.presets && typeof raw.presets === 'object') {
+      TABS.forEach(function (name) {
+        var arr = raw.presets[name];
+        if (!Array.isArray(arr)) return;
+        out.presets[name] = arr.slice(0, 40).map(function (pr) {
+          if (!pr || typeof pr !== 'object') return null;
+          return {
+            id: typeof pr.id === 'string' ? pr.id : 'p' + Math.random().toString(36).slice(2),
+            name: String(pr.name == null ? '' : pr.name).slice(0, 24),
+            data: sanitizeSnapshot(pr.data)
+          };
+        }).filter(function (x) { return x && x.name; });
+      });
+    }
+    for (var t = 0; t < TABS.length; t++) {
+      var name = TABS[t], src = raw[name], p = out[name];
+      if (!src || typeof src !== 'object') continue;
+      if (typeof src.prefix === 'boolean') p.prefix = src.prefix;
+      if (typeof src.suffix === 'boolean') p.suffix = src.suffix;
+      if (typeof src.search === 'string' && src.search.length <= 64) p.search = src.search;
+      p.match = src.match === 'any' ? 'any' : 'all';
+      p.types = Array.isArray(src.types) ? src.types.slice(0, 16) : [];
+      if (typeof src.tierMin === 'string' && src.tierMin.length <= 2) p.tierMin = src.tierMin;
+      if (typeof src.tierMax === 'string' && src.tierMax.length <= 2) p.tierMax = src.tierMax;
+      if (src.basic && typeof src.basic === 'object') {
+        ['rarity', 'corruption'].forEach(function (k) {
+          if (typeof src.basic[k] === 'string' && src.basic[k].length <= 12) p.basic[k] = src.basic[k];
+        });
+      }
+      if (src.summary && typeof src.summary === 'object') {
+        Object.keys(p.summary).forEach(function (k) {
+          if (typeof src.summary[k] === 'string' && src.summary[k].length <= 4) p.summary[k] = src.summary[k];
+        });
+      }
+      if (src.selected && typeof src.selected === 'object') {
+        var all = allAffixes();
+        Object.keys(src.selected).slice(0, 400).forEach(function (id) {
+          var v = src.selected[id];
+          if (!v || (v.mode !== 'include' && v.mode !== 'exclude')) return;
+          if (!all.some(function (a) { return a.id === id; })) return;
+          p.selected[id] = {
+            mode: v.mode,
+            value: typeof v.value === 'string' && v.value.length <= 8 ? v.value : '',
+            value2: typeof v.value2 === 'string' && v.value2.length <= 8 ? v.value2 : ''
+          };
+        });
+      }
+    }
+    return out;
+  }
+
+  function sanitizeSnapshot(src) {
+    var out = { prefix: true, suffix: true, match: 'all', types: [], basic: {}, selected: {}, summary: {}, tierMin: '', tierMax: '' };
+    if (!src || typeof src !== 'object') return out;
+    if (typeof src.prefix === 'boolean') out.prefix = src.prefix;
+    if (typeof src.suffix === 'boolean') out.suffix = src.suffix;
+    out.match = src.match === 'any' ? 'any' : 'all';
+    out.types = Array.isArray(src.types) ? src.types.slice(0, 16) : [];
+    if (typeof src.tierMin === 'string') out.tierMin = src.tierMin.slice(0, 2);
+    if (typeof src.tierMax === 'string') out.tierMax = src.tierMax.slice(0, 2);
+    if (src.basic && typeof src.basic === 'object') {
+      ['rarity', 'corruption', 'revives'].forEach(function (k) {
+        if (typeof src.basic[k] === 'string') out.basic[k] = src.basic[k];
+      });
+      out.basic.rarities = Array.isArray(src.basic.rarities)
+        ? src.basic.rarities.filter(function (x) { return ['normal', 'magic', 'rare', 'unique'].indexOf(x) >= 0; }).slice(0, 4)
+        : [];
+    }
+    if (src.summary && typeof src.summary === 'object') {
+      ['eff', 'itemRarity', 'monsterRarity', 'packSize', 'waystone'].forEach(function (k) {
+        if (typeof src.summary[k] === 'string' && src.summary[k].length <= 4) out.summary[k] = src.summary[k];
+      });
+    }
+    if (src.selected && typeof src.selected === 'object') {
+      var all = allAffixes();
+      Object.keys(src.selected).slice(0, 400).forEach(function (id) {
+        var v = src.selected[id];
+        if (!v || (v.mode !== 'include' && v.mode !== 'exclude')) return;
+        if (!all.some(function (a) { return a.id === id; })) return;
+        out.selected[id] = {
+          mode: v.mode,
+          value: typeof v.value === 'string' ? v.value.slice(0, 8) : '',
+          value2: typeof v.value2 === 'string' ? v.value2.slice(0, 8) : ''
+        };
+      });
+    }
+    return out;
+  }
+
+  var state = defaults(), storageOK = true;
+  try { state = restore(JSON.parse(localStorage.getItem(KEY) || 'null')); } catch (e) { storageOK = false; }
+
+  function save() {
+    try { localStorage.setItem(KEY, JSON.stringify(state)); storageOK = true; }
+    catch (e) { storageOK = false; }
+    var el = $('status');
+    if (el) el.textContent = storageOK ? tr('saved') : tr('saveBlocked');
+  }
+
+  function tr(key) { var v = I.t[key]; if (!v) return key; return v[state.language] || v.cn || key; }
+  function loc(obj) { if (!obj) return null; return obj[state.language] || obj.cn || obj.en || null; }
+  function nameOfType(id) { var t = I.tabletTypes.filter(function (x) { return x.id === id; })[0]; return t ? loc(t) : id; }
+  function html(s) { return String(s == null ? '' : s).replace(/[&<>"']/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]; }); }
+  function allAffixes() { return D.waystone.concat(D.tablet); }
+  function page() { return state[state.tab]; }
+  function affixById(id) { var all = allAffixes(); for (var i = 0; i < all.length; i++) if (all[i].id === id) return all[i]; return null; }
+
+  
+  var SUMMARY_FIELDS = [
+    { id: 'itemRarity', label: 'smItemRarity', prefix: { cn: '物品稀有度', tw: '物品稀有度', en: 'Item Rarity' } },
+    { id: 'packSize', label: 'smPackSize', prefix: { cn: '怪物群规模', tw: '怪群大小', en: 'Pack Size' } },
+    { id: 'eff', label: 'smEff', prefix: { cn: '怪物效能', tw: '怪物效能', en: 'Monster Effectiveness' } },
+    { id: 'monsterRarity', label: 'smMonsterRarity', prefix: { cn: '怪物稀有度', tw: '怪物稀有度', en: 'Monster Rarity' } },
+    { id: 'waystone', label: 'smWaystone', prefix: { cn: '引路石掉落几率', tw: '換界石掉落機率', en: 'WayStone Drop Chance' } }
+  ];
+
+  function filtered() {
+    var p = page(), tab = state.tab;
+    if (tab === 'tablet' && !p.types.length) return [];
+    var q = p.search.trim().toLowerCase();
+    return (D[tab] || []).filter(function (a) {
+      if (!p[a.side === 'suffix' ? 'suffix' : 'prefix']) return false;
+      if (tab === 'tablet' && a.types && a.types.length && p.types.length && !a.types.some(function (t) { return p.types.indexOf(t) >= 0; })) return false;
+      if (q) {
+        var hay = [loc(a.tpl), a.tpl.cn, a.tpl.tw, a.tpl.en].filter(Boolean).join(' ').toLowerCase();
+        if (hay.indexOf(q) < 0) return false;
+      }
+      return true;
+    });
+  }
+
+  function fragmentFor(a, sel) {
+    var lines = affixLines(a);
+    if (!lines || !lines.length) return null;
+    
+    var text = lines.join(' ');
+    if (sel && sel.mode === 'include' && (sel.value !== '' || sel.value2 !== '')) {
+      var t = R.threshold(text, { atLeast: sel.value !== '' ? Number(sel.value) : undefined, atMost: sel.value2 !== '' ? Number(sel.value2) : undefined });
+      if (t) return t;
+    }
+    return R.presence(text);
+  }
+
+  function selectedList(mode) {
+    var p = page(), out = [];
+    Object.keys(p.selected).forEach(function (id) {
+      if (p.selected[id].mode !== mode) return;
+      var a = affixById(id);
+      if (a) out.push(a);
+    });
+    return out;
+  }
+
+  function tierFragments(p, tab) {
+    var out = [];
+    if (tab !== 'waystone') return out;
+    var min = p.tierMin ? parseInt(p.tierMin, 10) : null;
+    var max = p.tierMax ? parseInt(p.tierMax, 10) : null;
+    if (min === null && max === null) return out;
+    if (min === null) min = 1;
+    if (max === null) max = 16;
+    if (min < 1) min = 1;
+    if (max > 16) max = 16;
+    if (min > max) { var tmp = min; min = max; max = tmp; }
+    var range = R.numberInRange(min, max);
+    if (!range) return out;
+    
+    var pre, suf;
+    if (state.language === 'en') {
+      pre = 'Tier\\s*'; suf = '';
+    } else if (state.language === 'tw') {
+      pre = '階級\\s*'; suf = '\\s*';
+    } else {
+      pre = '\\s*'; suf = '\\s*阶';
+    }
+    out.push(pre + range + suf);
+    return out;
+  }
+
+  
+  function summaryFragments(p, tab) {
+    var out = [];
+    if (tab !== 'waystone') return out;
+    SUMMARY_FIELDS.forEach(function (f) {
+      var raw = p.summary[f.id];
+      if (raw === '' || raw == null) return;
+      var min = parseInt(raw, 10);
+      if (isNaN(min)) return;
+      
+      if (!f.zeroOk && min <= 0) return;
+      if (min < 0) return;
+      var prefix = loc(f.prefix);
+      if (!prefix) return;
+      var range = R.numberInRange(min, f.max || 999);
+      if (!range) return;
+      out.push(R.esc(prefix) + R.fieldSep + range + (f.noPercent ? '' : '%'));
+    });
+    return out;
+  }
+
+  function compose() {
+    var p = page(), tab = state.tab;
+    var includes = [], excludes = [], always = [], unresolved = [];
+    var selIds = Object.keys(p.selected);
+    for (var i = 0; i < selIds.length; i++) {
+      var id = selIds[i], sel = p.selected[id];
+      var a = affixById(id);
+      if (!a) continue;
+      var frag = fragmentFor(a, sel);
+      if (!frag) { unresolved.push(loc(a.tpl) || id); continue; }
+      (sel.mode === 'exclude' ? excludes : includes).push(frag);
+    }
+    var smFrags = summaryFragments(p, tab);
+    for (var s = 0; s < smFrags.length; s++) always.push(smFrags[s]);
+    var tf = tierFragments(p, tab);
+    for (var ti = 0; ti < tf.length; ti++) always.push(tf[ti]);
+    if (tab === 'tablet' && p.types.length) {
+      var names = p.types.map(function (t) { return nameOfType(t); }).filter(Boolean);
+      if (names.length) always.push('(' + names.map(R.esc).join('|') + ')');
+    }
+    if (p.basic.rarities && p.basic.rarities.length) {
+      var rarLine = loc(I.anchors.rarityLine) || '';
+      var rarWord = p.basic.rarities.map(function (k) {
+        var t = loc(I.anchors[k]);
+        return t ? R.presence(t, 1) : null;
+      }).filter(Boolean);
+      if (rarLine && rarWord.length) {
+        always.push(R.esc(rarLine) + R.fieldSep + '.*(?:' + rarWord.join('|') + ')');
+      }
+    }
+    if (tab === 'waystone' && p.basic.revives !== '' && p.basic.revives != null) {
+      var revLbl = loc(I.t.revivesLabel);
+      if (revLbl) always.push(R.esc(revLbl) + R.looseSep + p.basic.revives);
+    }
+    if (p.basic.corruption === 'no') excludes.push(R.esc(loc(I.anchors.corrupted)));
+    if (p.basic.corruption === 'yes') always.push(R.esc(loc(I.anchors.corrupted)));
+    always = always.filter(Boolean);
+
+    var levels = [];
+    levels.push({ includes: includes, excludes: excludes, always: always, match: p.match });
+    levels.push({ includes: includes.map(function (s2) { return s2.replace(/\[\d-\d\]|\[0-9\]|\([0-9|\[\]\-]+\)/g, '[0-9]'); }), excludes: excludes, always: always, match: p.match });
+    var fitted = R.fit(levels, R.BUDGET_SAFE);
+
+    return {
+      ok: fitted.level >= 0 && !fitted.empty,
+      source: fitted.source || '',
+      length: fitted.length || 0,
+      level: fitted.level,
+      over: !!fitted.over,
+      unresolved: unresolved,
+      count: selIds.length + smFrags.length + tf.length +
+        ((tab === 'waystone' && p.basic.revives !== '' && p.basic.revives != null) ? 1 : 0) +
+        ((p.basic.rarities && p.basic.rarities.length) ? 1 : 0)
+    };
+  }
+
+  function renderChrome() {
+    document.documentElement.lang = state.language === 'tw' ? 'zh-Hant' : state.language === 'en' ? 'en' : 'zh-Hans';
+    document.title = tr('brand') + ' · ' + tr('brandSub');
+    $('brand-name').textContent = tr('brand');
+    $('brand-sub').textContent = tr('brandSub');
+    $('tab-waystone').textContent = tr('tabWaystone');
+    $('tab-tablet').textContent = tr('tabTablet');
+    $('language-label').textContent = tr('language');
+    $('affix-heading').textContent = tr('affixFilter');
+    $('search').placeholder = tr('searchPlaceholder');
+    $('toggle-prefix').textContent = tr('prefix');
+    $('toggle-suffix').textContent = tr('suffix');
+    $('match-all').textContent = tr('matchAll');
+    $('match-any').textContent = tr('matchAny');
+    $('clear-selected').textContent = tr('clearSelected');
+    $('result-heading').textContent = tr('selectedConditions');
+    $('regex-heading').textContent = tr('tradePreview');
+    $('copy').textContent = tr('copyRegex');
+    $('clear').textContent = tr('clearAll');
+    $('footer-brand').textContent = tr('brand');
+    $('footer-note').textContent = tr('footerNote');
+    $('footer-author').textContent = tr('author');
+    renderFooterSource();
+    renderNotices();
+    $('tier-heading').textContent = tr('tierHeading');
+    $('tier-hint').textContent = tr('tierHint');
+    $('tier-clear').textContent = tr('summaryClear');
+    $('summary-heading').textContent = tr('summaryHeading');
+    $('summary-hint').textContent = tr('summaryHint');
+    $('summary-clear').textContent = tr('summaryClear');
+    $('hot-label').textContent = tr('hotHeading');
+    $('fav-heading').textContent = tr('favHeading');
+    $('fav-name').placeholder = tr('favPlaceholder');
+    $('fav-save').textContent = tr('favSave');
+    $('hv-heading').textContent = tr('hvHeading');
+    renderHvHint();
+    $('hv-price-label').textContent = tr('hvPrice');
+    var tabs = $('tabs').querySelectorAll('button');
+    for (var i = 0; i < tabs.length; i++) tabs[i].setAttribute('aria-pressed', tabs[i].getAttribute('data-tab') === state.tab ? 'true' : 'false');
+    $('language').value = state.language;
+  }
+
+  
+  function tVal(key) {
+    var v = I.t[key];
+    if (v == null) return null;
+    if (Array.isArray(v)) {
+      if (v.length && typeof v[0] === 'string') return v;
+      return v[state.language] || v.cn || null;
+    }
+    return v[state.language] || v.cn || null;
+  }
+
+  var SOURCE_LINKS = [
+    { name: 'Poe2DB', href: 'https://poe2db.tw/' },
+    { name: '炖了一锅鱼', href: 'https://space.bilibili.com/27021867' }
+  ];
+
+  
+  function renderFooterSource() {
+    var el = $('footer-source');
+    if (!el) return;
+    var label = tVal('footerSourceLabel') || '数据来源于';
+    var colon = tVal('footerSourceColon');
+    if (colon == null) colon = '：';
+    var join = tVal('footerSourceJoin');
+    if (join == null) join = '、';
+    var links = SOURCE_LINKS.map(function (s) {
+      return '<a href="' + s.href + '" target="_blank" rel="noopener noreferrer">' + html(s.name) + '</a>';
+    }).join(html(join));
+    el.innerHTML = html(label) + html(colon) + links;
+    var ver = tVal('footerVersion');
+    if (ver == null) ver = 'Version 26.09.24';
+    var ve = $('footer-version');
+    if (ve) ve.textContent = ver;
+  }
+
+  
+  function renderNotices() {
+    var fh = $('free-heading'); if (fh) fh.textContent = tVal('freeHeading') || tr('freeHeading');
+    var sh = $('sponsor-heading'); if (sh) sh.textContent = tVal('sponsorHeading') || tr('sponsorHeading');
+    var items = $('free-items');
+    var list = tVal('freeItems') || [];
+    if (items) items.innerHTML = list.map(function (s) { return '<li>' + html(s) + '</li>'; }).join('');
+    var spon = $('sponsor-body');
+    if (spon) {
+      spon.innerHTML = html(tVal('sponsorPre') || '') +
+        '<span class="bili-badge">B站</span>' +
+        '<a class="notice-link" href="https://space.bilibili.com/7132721" target="_blank" rel="noopener noreferrer">' +
+        html(tVal('sponsorName') || 'LMemory氿忆') + '</a>' +
+        html(tVal('sponsorPost') || '');
+    }
+  }
+
+  function renderPrimary() {
+    var p = page(), tab = state.tab;
+    $('primary-heading').textContent = tab === 'tablet' ? tr('tabTablet') : tr('tabWaystone');
+    var body = $('primary-body');
+    var out = [];
+    if (tab === 'tablet') {
+      out.push('<p class="hint mb-xs">' + html(tr('tabletType')) + '</p>');
+      out.push('<div class="chips" id="type-chips">');
+      I.tabletTypes.forEach(function (t) {
+        out.push('<button type="button" class="chip" data-type="' + t.id + '" aria-pressed="' + (p.types.indexOf(t.id) >= 0 ? 'true' : 'false') + '">' + html(loc(t)) + '</button>');
+      });
+      out.push('</div>');
+    }
+    out.push('<div class="control-row row-wide">');
+    if (tab === 'waystone') {
+      out.push('<div><p class="hint mb-sm">' + html(tr('revivesLabel')) + '</p><div class="chips" id="revives-chips">');
+      [['', 'any'], ['0', '0'], ['1', '1'], ['2', '2'], ['3', '3'], ['4', '4'], ['5', '5']].forEach(function (r) {
+        out.push('<button type="button" class="chip" data-revives="' + r[0] + '" aria-pressed="' + ((p.basic.revives || '') === r[0] ? 'true' : 'false') + '">' + html(r[0] === '' ? tr('any') : r[1]) + '</button>');
+      });
+      out.push('</div></div>');
+    }
+    out.push('<div><p class="hint mb-sm">' + html(tr('rarity')) + '</p><div class="chips" id="rarity-chips">');
+    var rarSel = p.basic.rarities || [];
+    var rarityOpts = [['', 'any'], ['rarityNormal', 'normal'], ['rarityMagic', 'magic'], ['rarityRare', 'rare']];
+    if (tab !== 'waystone') rarityOpts.push(['rarityUnique', 'unique']);
+    rarityOpts.forEach(function (r) {
+      var val = r[1] === 'any' ? '' : r[1];
+      var label = r[0] ? tr(r[0]) : tr('any');
+      var on = val === '' ? (rarSel.length === 0) : (rarSel.indexOf(val) >= 0);
+      out.push('<button type="button" class="chip" data-rarity="' + val + '" aria-pressed="' + (on ? 'true' : 'false') + '">' + html(label) + '</button>');
+    });
+    out.push('</div></div>');
+    out.push('<div><p class="hint mb-sm">' + html(tr('corrupted')) + '</p><div class="chips" id="corruption-chips">');
+    [['', 'any'], ['no', 'corruptedNo'], ['yes', 'corruptedYes']].forEach(function (r) {
+      out.push('<button type="button" class="chip" data-corruption="' + r[0] + '" aria-pressed="' + ((p.basic.corruption || '') === r[0] ? 'true' : 'false') + '">' + html(r[0] === '' ? tr('any') : tr(r[1])) + '</button>');
+    });
+    out.push('</div></div>');
+    out.push('</div>');
+    body.innerHTML = out.join('');
+  }
+
+  function renderTierPanel() {
+    var card = $('tier-card');
+    card.classList.toggle('is-hidden', state.tab !== 'waystone');
+    if (state.tab !== 'waystone') return;
+    var p = page();
+    var out = [];
+    out.push('<div class="tier-field">');
+    out.push('<label for="tier-min">' + html(tr('tierMin')) + '</label>');
+    out.push('<input class="input" id="tier-min" type="number" inputmode="numeric" min="1" max="16" data-tier="min" placeholder="1" value="' + html(p.tierMin || '') + '">');
+    out.push('</div>');
+    out.push('<div class="tier-field">');
+    out.push('<label for="tier-max">' + html(tr('tierMax')) + '</label>');
+    out.push('<input class="input" id="tier-max" type="number" inputmode="numeric" min="1" max="16" data-tier="max" placeholder="16" value="' + html(p.tierMax || '') + '">');
+    out.push('</div>');
+    $('tier-body').innerHTML = out.join('');
+  }
+
+  function renderSummaryPanel() {
+    var card = $('summary-card');
+    card.classList.toggle('is-hidden', state.tab !== 'waystone');
+    if (state.tab !== 'waystone') return;
+    var p = page();
+    var out = [];
+    SUMMARY_FIELDS.forEach(function (f) {
+      var v = p.summary[f.id] || '';
+      var step = f.noPercent ? '1' : '1';
+      out.push('<div class="summary-field">');
+      out.push('<label for="sm-' + f.id + '">' + html(tr(f.label)) + '</label>');
+      out.push('<input class="input" id="sm-' + f.id + '" type="number" inputmode="numeric" min="0" max="' + (f.max || 999) + '" step="' + step + '" data-summary="' + f.id + '" placeholder="' + html(tr('unlimited')) + '" value="' + html(v) + '">');
+      out.push('</div>');
+    });
+    $('summary-body').innerHTML = out.join('');
+  }
+
+  function renderHotBar() {
+    var card = $('hot-bar');
+    card.classList.toggle('is-hidden', state.tab === 'tablet');
+    if (state.tab === 'tablet') return;
+    var p = page();
+    var rows = [];
+    HOT_IDS.forEach(function (id) {
+      var a = affixById(id);
+      if (!a) return;
+      var sel = p.selected[id];
+      var cls = 'hot-row' + (sel ? (sel.mode === 'include' ? ' inc' : ' exc') : '');
+      var text = loc(a.tpl) || a.tpl.cn || id;
+      rows.push(
+        '<div class="' + cls + '" data-hot="' + html(id) + '">' +
+          '<span class="hot-text">' + html(text) + '</span>' +
+          '<span class="row-actions">' +
+            '<button type="button" class="icon-btn inc" data-hotact="include" title="' + html(tr('include')) + '" aria-label="' + html(tr('include')) + '">+</button>' +
+            '<button type="button" class="icon-btn exc" data-hotact="exclude" title="' + html(tr('exclude')) + '" aria-label="' + html(tr('exclude')) + '">−</button>' +
+          '</span>' +
+        '</div>'
+      );
+    });
+    card.innerHTML = '<span class="hot-label" id="hot-label">' + html(tr('hotHeading')) + '</span><div class="hot-list">' + rows.join('') + '</div>';
+  }
+
+  function renderHvHint() {
+    var el = $('hv-hint');
+    if (!el) return;
+    var link = '<a class="notice-link" href="https://space.bilibili.com/27021867" target="_blank" rel="noopener noreferrer">' + html(SOURCE_LINKS[1].name) + '</a>';
+    el.innerHTML = html(tr('hvHint')) + ' ' + html(tr('hvHintSource')) + ' ' + link;
+  }
+
+  function hvName(item) {
+    if (state.language === 'en') return item.en || item.cn || item.n || '';
+    if (state.language === 'tw') return (item.n || item.cn || '').split('阿茲莫裡').join('阿茲莫里');
+    return item.cn || item.n || '';
+  }
+
+  function renderHighValue() {
+    var card = $('hv-card');
+    card.classList.toggle('is-hidden', state.tab !== 'tablet');
+    if (state.tab !== 'tablet') return;
+    var chips = [];
+    chips.push('<button type="button" class="chip" data-hvtype="__all" aria-pressed="' + (state.hvTypes.length === 0 ? 'true' : 'false') + '">' + html(tr('hvTypeAny')) + '</button>');
+    I.tabletTypes.forEach(function (t) {
+      chips.push('<button type="button" class="chip" data-hvtype="' + t.id + '" aria-pressed="' + (state.hvTypes.indexOf(t.id) >= 0 ? 'true' : 'false') + '">' + html(loc(t)) + '</button>');
+    });
+    $('hv-types').innerHTML = chips.join('');
+    $('hv-price').value = state.hvPrice || '';
+    $('hv-currency').value = state.hvCurrency || 'E';
+    var minE = 0;
+    if (state.hvPrice !== '' && state.hvPrice != null) {
+      var num = parseFloat(state.hvPrice);
+      if (!isNaN(num)) minE = num * (RATE[state.hvCurrency] || 1);
+    }
+    var types = state.hvTypes.length ? state.hvTypes : I.tabletTypes.map(function (t) { return t.id; });
+    var rows = [];
+    types.forEach(function (tid) {
+      (HV[tid] || []).forEach(function (item) {
+        if (minE > 0 && item.p < minE) return;
+        var built = hvBuild(item);
+        if (!built) return;
+        rows.push({ tid: tid, item: item, built: built });
+      });
+    });
+    rows.sort(function (a, b) { return b.item.p - a.item.p; });
+    $('hv-count').textContent = rows.length + ' ' + tr('hvTotal');
+    if (!rows.length) { $('hv-list').innerHTML = '<div class="empty">' + html(tr('hvEmpty')) + '</div>'; return; }
+    var out = [];
+    rows.forEach(function (r) {
+      out.push('<div class="hv-item">');
+      out.push('<span class="hv-type">' + html(nameOfType(r.tid)) + '</span>');
+      out.push('<span class="hv-main"><span class="hv-name">' + html(hvName(r.item)) + '</span>');
+      out.push('<div class="hv-regex" title="' + html(r.built.source) + '">' + html(r.built.source) + '</div></span>');
+      out.push('<span class="hv-price">' + formatPrice(r.item.p) + '</span>');
+      out.push('<button type="button" class="btn small ghost" data-hvcopy="' + html(r.built.source) + '">' + html(tr('hvCopy')) + '</button>');
+      out.push('</div>');
+    });
+    $('hv-list').innerHTML = out.join('');
+  }
+
+  function formatPrice(e) {
+    if (e >= 468) return (Math.round(e / 468 * 10) / 10) + 'D';
+    if (e >= 56) return (Math.round(e / 56 * 10) / 10) + 'C';
+    return Math.round(e) + 'E';
+  }
+
+  function hvBuild(item) {
+    var frags = [];
+    for (var i = 0; i < item.a.length; i++) {
+      var id = item.a[i][0], min = item.a[i][1];
+      var a = affixById(id);
+      if (!a) continue;
+      var text = loc(a.tpl);
+      if (!text) continue;
+      var frag = null;
+      if (min != null) frag = R.threshold(text, { atLeast: min });
+      if (!frag) frag = R.presence(text);
+      if (frag) frags.push(frag);
+    }
+    if (!frags.length) return null;
+    var built = R.build({ includes: frags, match: 'all' });
+    return built.ok ? built : null;
+  }
+
+  function renderFavorites() {
+    var list = state.presets[state.tab] || [];
+    $('fav-count').textContent = list.length;
+    if (!list.length) { $('fav-list').innerHTML = '<p class="hint">' + html(tr('favEmpty')) + '</p>'; return; }
+    var out = [];
+    list.forEach(function (pr) {
+      var n = Object.keys(pr.data.selected || {}).length +
+        SUMMARY_FIELDS.filter(function (f) { return pr.data.summary && pr.data.summary[f.id]; }).length +
+        (pr.data.tierMin || pr.data.tierMax ? 1 : 0);
+      out.push('<div class="fav-item" data-fav="' + html(pr.id) + '">');
+      out.push('<span class="fav-name" title="' + html(pr.name) + '">' + html(pr.name) + '</span>');
+      out.push('<span class="fav-meta">' + n + ' ' + html(tr('favCountUnit')) + '</span>');
+      out.push('<button type="button" class="fav-del" data-favdel="' + html(pr.id) + '" title="' + html(tr('favDelete')) + '" aria-label="' + html(tr('favDelete')) + '">×</button>');
+      out.push('</div>');
+    });
+    $('fav-list').innerHTML = out.join('');
+  }
+
+  function savePreset() {
+    var name = $('fav-name').value.trim();
+    if (!name) { $('status').textContent = tr('favNameRequired'); return; }
+    var p = page();
+    var snap = sanitizeSnapshot({ prefix: p.prefix, suffix: p.suffix, match: p.match, types: p.types, basic: p.basic, selected: p.selected, summary: p.summary, tierMin: p.tierMin, tierMax: p.tierMax });
+    if (!state.presets[state.tab]) state.presets[state.tab] = [];
+    state.presets[state.tab].push({ id: 'p' + Date.now() + Math.floor(Math.random() * 1000), name: name.slice(0, 24), data: snap });
+    $('fav-name').value = '';
+    $('status').textContent = tr('favSaved');
+    save(); renderFavorites();
+  }
+
+  function applyPreset(id) {
+    var list = state.presets[state.tab] || [], pr = null;
+    for (var i = 0; i < list.length; i++) if (list[i].id === id) pr = list[i];
+    if (!pr) return;
+    var p = page(), d = pr.data;
+    p.prefix = d.prefix; p.suffix = d.suffix; p.match = d.match;
+    p.types = (d.types || []).slice();
+    p.basic = JSON.parse(JSON.stringify(d.basic || {}));
+    p.selected = JSON.parse(JSON.stringify(d.selected || {}));
+    p.summary = JSON.parse(JSON.stringify(d.summary || {}));
+    p.tierMin = d.tierMin || '';
+    p.tierMax = d.tierMax || '';
+    SUMMARY_FIELDS.forEach(function (f) { if (!p.summary[f.id]) p.summary[f.id] = ''; });
+    $('status').textContent = tr('favApplied') + pr.name;
+    save(); renderAll();
+  }
+
+  function deletePreset(id) {
+    var list = state.presets[state.tab] || [];
+    state.presets[state.tab] = list.filter(function (x) { return x.id !== id; });
+    save(); renderFavorites();
+  }
+
+  
+  function rowActions() {
+    return '<span class="row-actions">' +
+      '<button type="button" class="icon-btn inc" data-act="include" title="' + html(tr('include')) + '" aria-label="' + html(tr('include')) + '">+</button>' +
+      '<button type="button" class="icon-btn exc" data-act="exclude" title="' + html(tr('exclude')) + '" aria-label="' + html(tr('exclude')) + '">−</button>' +
+      '</span>';
+  }
+  function renderList() {
+    var list = filtered(), p = page(), host = $('affix-list');
+    $('visible-count').textContent = list.length + ' ' + tr('resultCount');
+    $('primary-badge').textContent = Object.keys(p.selected).length;
+    if (!list.length) {
+      var msg = state.tab === 'tablet' && !p.types.length ? tr('selectTypeFirst') : tr('noConditions');
+      host.innerHTML = '<div class="empty">' + html(msg) + '</div>';
+      return;
+    }
+    var groups = {}, order = [];
+    list.forEach(function (a) {
+      var key = a.side;
+      if (!groups[key]) { groups[key] = []; order.push(key); }
+      groups[key].push(a);
+    });
+    var out = [];
+    order.forEach(function (key) {
+      out.push('<div class="group-label">' + html(key === 'suffix' ? tr('suffix') : tr('prefix')) + '</div>');
+      groups[key].forEach(function (a) {
+        var sel = p.selected[a.id];
+        var cls = 'affix-row' + (a.composite ? ' composite' : '') + (sel ? (sel.mode === 'include' ? ' inc' : ' exc') : '');
+        out.push('<div class="' + cls + '" data-id="' + html(a.id) + '">');
+        out.push('<span class="affix-text">' + affixTextHtml(a) + '</span>');
+        out.push(rowActions());
+        if (sel && sel.mode === 'include' && a.rng) {
+          out.push('<span class="threshold full-basis">');
+          out.push('<span>' + html(tr('atLeast')) + '</span>');
+          out.push('<input type="number" inputmode="numeric" data-thr="value" min="0" max="999" placeholder="' + html(tr('unlimited')) + '" value="' + html(sel.value || '') + '">');
+          out.push('<span class="c-sub">' + html(tr('atMost')) + '</span>');
+          out.push('<input type="number" inputmode="numeric" data-thr="value2" min="0" max="999" placeholder="' + html(tr('unlimited')) + '" value="' + html(sel.value2 || '') + '">');
+          out.push('<span class="c-sub-2">' + html(tr('referenceRange')) + ' ' + a.rng[0] + '–' + a.rng[1] + '</span>');
+          out.push('</span>');
+        }
+        out.push('<span class="affix-meta">');
+        out.push('<span class="tag ' + a.side + '">' + html(a.side === 'suffix' ? tr('suffix') : tr('prefix')) + '</span>');
+        out.push('</span>');
+        out.push('</div>');
+      });
+    });
+    host.innerHTML = out.join('');
+  }
+
+  
+  function affixLines(a) {
+    var L = a.lines || {};
+    var cur = L[state.language];
+    if (cur && cur.length) return cur;
+    if (L.cn && L.cn.length) return L.cn;
+    var t = loc(a.tpl);
+    return t ? [t] : [];
+  }
+  function affixTextHtml(a) {
+    var lines = affixLines(a);
+    if (!lines.length) return html('(?)');
+    if (lines.length === 1) return html(lines[0]);
+    return lines.map(function (l) { return '<span class="ln">' + html(l) + '</span>'; }).join('');
+  }
+
+  function renderResult() {
+    var p = page(), res = compose();
+    $('condition-count').textContent = res.count;
+    var selIds = Object.keys(p.selected);
+    var smActive = SUMMARY_FIELDS.filter(function (f) { return p.summary[f.id]; });
+    var hasTier = (p.tierMin || p.tierMax);
+    var hasRevives = (state.tab === 'waystone' && p.basic.revives !== '' && p.basic.revives != null);
+    var rarSel = p.basic.rarities || [];
+    var hasRarity = rarSel.length > 0;
+    var summary = $('summary');
+    if (!selIds.length && !smActive.length && !hasTier && !hasRevives && !hasRarity) {
+      summary.innerHTML = '<p class="hint mb-lg">' + html(tr('noConditions')) + '</p>';
+    } else {
+      var rows = [];
+      if (hasTier) {
+        var tMin = p.tierMin || '1';
+        var tMax = p.tierMax || '16';
+        rows.push('<div class="result-item inc"><span class="mode">T</span><span class="label">' + html(tr('tierHeading')) + '</span><span class="thr">' + html(tMin + '–' + tMax) + '</span></div>');
+      }
+      if (hasRevives) {
+        rows.push('<div class="result-item inc"><span class="mode">=</span><span class="label">' + html(tr('revivesLabel')) + '</span><span class="thr">' + html(String(p.basic.revives)) + '</span></div>');
+      }
+      if (hasRarity) {
+        var rarNames = rarSel.map(function (k) { return tr(k === 'normal' ? 'rarityNormal' : k === 'magic' ? 'rarityMagic' : k === 'rare' ? 'rarityRare' : 'rarityUnique'); }).join(' / ');
+        rows.push('<div class="result-item inc"><span class="mode">=</span><span class="label">' + html(tr('rarity')) + '</span><span class="thr">' + html(rarNames) + '</span></div>');
+      }
+      smActive.forEach(function (f) {
+        rows.push('<div class="result-item inc"><span class="mode">≥</span><span class="label">' + html(tr(f.label)) + '</span><span class="thr">' + html(p.summary[f.id]) + '</span></div>');
+      });
+      selIds.forEach(function (id) {
+        var sel = p.selected[id];
+        var a = affixById(id);
+        if (!a) return;
+        var label = loc(a.tpl) || a.tpl.cn || a.id;
+        var thr = '';
+        if (sel.mode === 'include' && (sel.value || sel.value2)) {
+          thr = (sel.value ? '≥' + sel.value : '') + (sel.value && sel.value2 ? ' ' : '') + (sel.value2 ? '≤' + sel.value2 : '');
+        }
+        rows.push('<div class="result-item ' + (sel.mode === 'include' ? 'inc' : 'exc') + '">' +
+          '<span class="mode">' + (sel.mode === 'include' ? '+' : '−') + '</span>' +
+          '<span class="label" title="' + html(label) + '">' + html(label) + '</span>' +
+          (thr ? '<span class="thr">' + html(thr) + '</span>' : '') + '</div>');
+      });
+      summary.innerHTML = '<div class="result-list">' + rows.join('') + '</div>';
+    }
+
+    var src = $('regex-source'), msg = $('regex-message'), lenEl = $('regex-length');
+    if (!res.ok || !res.source) {
+      src.textContent = '';
+      src.classList.add('empty');
+      msg.textContent = res.unresolved.length ? (tr('copyDisabled') + '：' + res.unresolved.join(' / ')) : tr('noConditions');
+      msg.className = 'regex-msg' + (res.unresolved.length ? ' error' : '');
+      $('copy').disabled = true;
+      lenEl.textContent = '';
+      lenEl.className = 'len';
+    } else {
+      src.textContent = res.source;
+      src.classList.remove('empty');
+      lenEl.textContent = res.length + ' / ' + R.BUDGET;
+      lenEl.className = 'len' + (res.over ? ' over' : '');
+      var notes = [];
+      if (res.level === 1) notes.push(tr('noteLoose'));
+      else if (res.level === 2) notes.push(tr('noteShort'));
+      else if (res.level >= 3) notes.push(tr('noteMini'));
+      if (res.over) notes.push(tr('noteOver'));
+      if (res.unresolved.length) notes.push(tr('noteUnready') + '：' + res.unresolved.join(' / '));
+      msg.textContent = notes.join(' · ');
+      msg.className = 'regex-msg' + (res.over || res.unresolved.length ? ' error' : '');
+      $('copy').disabled = res.unresolved.length > 0 || res.over;
+    }
+  }
+
+  function renderAll() {
+    renderChrome(); renderPrimary(); renderTierPanel(); renderSummaryPanel(); renderHotBar(); renderHighValue(); renderList(); renderResult(); renderFavorites();
+  }
+
+  function bind() {
+    $('tabs').addEventListener('click', function (e) {
+      var b = e.target.closest('button[data-tab]');
+      if (!b) return;
+      state.tab = b.getAttribute('data-tab');
+      save(); renderAll();
+    });
+    $('language').addEventListener('change', function (e) { state.language = e.target.value; save(); renderAll(); });
+    $('toggle-prefix').addEventListener('click', function () {
+      var p = page(); p.prefix = !p.prefix;
+      this.setAttribute('aria-pressed', p.prefix ? 'true' : 'false');
+      save(); renderList(); renderResult();
+    });
+    $('toggle-suffix').addEventListener('click', function () {
+      var p = page(); p.suffix = !p.suffix;
+      this.setAttribute('aria-pressed', p.suffix ? 'true' : 'false');
+      save(); renderList(); renderResult();
+    });
+    $('match-mode').addEventListener('click', function (e) {
+      var b = e.target.closest('button[data-match]');
+      if (!b) return;
+      page().match = b.getAttribute('data-match');
+      var bs = this.querySelectorAll('button');
+      for (var i = 0; i < bs.length; i++) bs[i].setAttribute('aria-pressed', bs[i] === b ? 'true' : 'false');
+      save(); renderResult();
+    });
+    var searchTimer = null;
+    $('search').addEventListener('input', function (e) {
+      page().search = e.target.value;
+      clearTimeout(searchTimer);
+      searchTimer = setTimeout(function () { save(); renderList(); }, 120);
+    });
+    $('clear-selected').addEventListener('click', function () { page().selected = {}; save(); renderList(); renderResult(); renderPrimary(); renderHotBar(); });
+    $('clear').addEventListener('click', function () { state[state.tab] = freshPage(); save(); renderAll(); });
+
+    $('primary-body').addEventListener('click', function (e) {
+      var b = e.target.closest('button');
+      if (!b) return;
+      var p = page();
+      if (b.hasAttribute('data-type')) {
+        var t = b.getAttribute('data-type'); var i = p.types.indexOf(t);
+        if (i >= 0) p.types.splice(i, 1); else p.types.push(t);
+        b.setAttribute('aria-pressed', i >= 0 ? 'false' : 'true');
+        save(); renderList(); renderResult(); renderPrimary();
+      } else if (b.hasAttribute('data-revives')) {
+        p.basic.revives = b.getAttribute('data-revives'); save(); renderPrimary(); renderResult();
+      } else if (b.hasAttribute('data-rarity')) {
+        var rv = b.getAttribute('data-rarity');
+        if (!p.basic.rarities) p.basic.rarities = [];
+        if (rv === '') p.basic.rarities = [];
+        else {
+          var ix = p.basic.rarities.indexOf(rv);
+          if (ix >= 0) p.basic.rarities.splice(ix, 1); else p.basic.rarities.push(rv);
+        }
+        save(); renderPrimary(); renderResult();
+      } else if (b.hasAttribute('data-corruption')) {
+        p.basic.corruption = b.getAttribute('data-corruption'); save(); renderPrimary(); renderResult();
+      }
+    });
+
+    $('tier-body').addEventListener('input', function (e) {
+      var el = e.target;
+      if (!el.hasAttribute || !el.hasAttribute('data-tier')) return;
+      var key = el.getAttribute('data-tier') === 'min' ? 'tierMin' : 'tierMax';
+      var v = String(el.value || '').replace(/[^0-9]/g, '').slice(0, 2);
+      page()[key] = v;
+      save(); renderResult();
+    });
+    $('tier-body').addEventListener('blur', function (e) {
+      var el = e.target;
+      if (!el.hasAttribute || !el.hasAttribute('data-tier')) return;
+      var v = String(el.value || '').replace(/[^0-9]/g, '').slice(0, 2);
+      if (v && parseInt(v, 10) > 16) v = '16';
+      if (v && parseInt(v, 10) < 1) v = '1';
+      el.value = v;
+      page()[el.getAttribute('data-tier') === 'min' ? 'tierMin' : 'tierMax'] = v;
+      save(); renderResult();
+    }, true);
+    $('tier-clear').addEventListener('click', function () {
+      var p = page(); p.tierMin = ''; p.tierMax = '';
+      save(); renderTierPanel(); renderResult();
+    });
+
+    $('summary-body').addEventListener('input', function (e) {
+      var el = e.target;
+      if (!el.hasAttribute || !el.hasAttribute('data-summary')) return;
+      var key = el.getAttribute('data-summary');
+      var v = String(el.value || '').replace(/[^0-9]/g, '').slice(0, 3);
+      page().summary[key] = v;
+      save(); renderResult();
+    });
+    $('summary-clear').addEventListener('click', function () {
+      var p = page(); SUMMARY_FIELDS.forEach(function (f) { p.summary[f.id] = ''; });
+      save(); renderSummaryPanel(); renderResult();
+    });
+
+    $('hot-bar').addEventListener('click', function (e) {
+      if (state.tab === 'tablet') return;
+      var row = e.target.closest('.hot-row[data-hot]');
+      if (!row) return;
+      var id = row.getAttribute('data-hot'), p = page();
+      var act = e.target.closest('button[data-hotact]');
+      var mode = act ? act.getAttribute('data-hotact') : null;
+      var cur = p.selected[id];
+      if (!mode) mode = cur ? null : 'include';
+      if (mode === null) delete p.selected[id];
+      else if (cur && cur.mode === mode) delete p.selected[id];
+      else p.selected[id] = { mode: mode, value: (cur && cur.value) || '', value2: (cur && cur.value2) || '' };
+      save(); renderHotBar(); renderList(); renderResult(); renderPrimary();
+    });
+
+    $('fav-save').addEventListener('click', savePreset);
+    $('fav-name').addEventListener('keydown', function (e) { if (e.key === 'Enter') { e.preventDefault(); savePreset(); } });
+    $('fav-list').addEventListener('click', function (e) {
+      var del = e.target.closest('button[data-favdel]');
+      if (del) { e.stopPropagation(); deletePreset(del.getAttribute('data-favdel')); return; }
+      var item = e.target.closest('.fav-item');
+      if (item) applyPreset(item.getAttribute('data-fav'));
+    });
+
+    var hvTimer = null;
+    $('hv-price').addEventListener('input', function (e) {
+      state.hvPrice = String(e.target.value || '').replace(/[^0-9.]/g, '').slice(0, 8);
+      clearTimeout(hvTimer); hvTimer = setTimeout(function () { save(); renderHighValue(); }, 200);
+    });
+    $('hv-currency').addEventListener('change', function (e) { state.hvCurrency = e.target.value; save(); renderHighValue(); });
+    $('hv-types').addEventListener('click', function (e) {
+      var b = e.target.closest('button[data-hvtype]');
+      if (!b) return;
+      var v = b.getAttribute('data-hvtype');
+      if (v === '__all') state.hvTypes = [];
+      else { var i = state.hvTypes.indexOf(v); if (i >= 0) state.hvTypes.splice(i, 1); else state.hvTypes.push(v); }
+      save(); renderHighValue();
+    });
+    $('hv-list').addEventListener('click', function (e) {
+      var b = e.target.closest('button[data-hvcopy]');
+      if (!b) return;
+      copyText(b.getAttribute('data-hvcopy'));
+    });
+
+    $('affix-list').addEventListener('click', function (e) {
+      var row = e.target.closest('.affix-row');
+      if (!row) return;
+      var id = row.getAttribute('data-id'), p = page();
+      var sub = row.getAttribute('data-sub') || null;
+      var act = e.target.closest('button[data-act]');
+      var mode = act ? act.getAttribute('data-act') : null;
+      var cur = p.selected[id];
+      if (!mode) mode = cur ? null : 'include';
+      if (mode === null) delete p.selected[id];
+      else if (cur && cur.mode === mode) delete p.selected[id];
+      else p.selected[id] = { mode: mode, value: (cur && cur.value) || '', value2: (cur && cur.value2) || '', sub: sub };
+      save(); renderList(); renderResult(); renderPrimary(); renderHotBar();
+    });
+    $('affix-list').addEventListener('input', function (e) {
+      if (!e.target.hasAttribute('data-thr')) return;
+      var row = e.target.closest('.affix-row');
+      if (!row) return;
+      var sel = page().selected[row.getAttribute('data-id')];
+      if (!sel) return;
+      sel[e.target.getAttribute('data-thr')] = e.target.value.replace(/[^0-9]/g, '').slice(0, 3);
+      save(); renderResult();
+    });
+
+    $('copy').addEventListener('click', function () { copyText($('regex-source').textContent); });
+    document.addEventListener('keydown', function (e) {
+      if (e.key === 'Escape' && document.activeElement === $('search')) {
+        $('search').value = ''; page().search = ''; save(); renderList();
+      }
+    });
+  }
+
+  function copyText(text) {
+    if (!text) return;
+    var done = function () { $('status').textContent = tr('copied'); setTimeout(function () { save(); }, 1600); };
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+      navigator.clipboard.writeText(text).then(done, function () { fallback(text, done); });
+    } else fallback(text, done);
+  }
+  function fallback(text, done) {
+    try {
+      var ta = document.createElement('textarea');
+      ta.value = text; ta.setAttribute('readonly', '');
+      ta.style.position = 'fixed'; ta.style.opacity = '0';
+      document.body.appendChild(ta); ta.select();
+      document.execCommand('copy'); document.body.removeChild(ta);
+      done();
+    } catch (e) { $('status').textContent = tr('copyFailed'); }
+  }
+
+  function boot() {
+    var st = R.selfTest();
+    if (!st.ok && window.console) console.warn('engine self-test failed', st.fails);
+    bind(); renderAll();
+    var el = $('status');
+    if (el) el.textContent = st.ok ? tr('saved') : (tr('selfTestFail') + ': ' + st.fails.join(', '));
+  }
+
+  if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', boot);
+  else boot();
+})();
+</script>
+</body>
+</html>
