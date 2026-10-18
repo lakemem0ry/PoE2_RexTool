@@ -1872,6 +1872,7 @@ window.POE2_HIGHVALUE = {
     });
 
     $('affix-list').addEventListener('click', function (e) {
+      if (e.target.closest('.threshold')) return;
       var row = e.target.closest('.affix-row');
       if (!row) return;
       var id = row.getAttribute('data-id'), p = page();
